@@ -7,7 +7,8 @@ import net.openan.observability.*;
 /** Fixed inputs for validating all four extensions against a Collector. */
 public final class ExtensionsExample {
     public static void main(String[] args) {
-        try (var sdk = ObservabilitySdk.start(SdkConfig.builder().serviceName("a2at-extensions-demo").build())) {
+        String serviceName = args.length == 0 ? "a2at-extensions-demo" : args[0];
+        try (var sdk = ObservabilitySdk.start(SdkConfig.builder().serviceName(serviceName).build())) {
             var o = sdk.observe();
             send(o, Map.of("extension.name", "task-t", "task.type", "diagnosis", "task.object", "demo-line"), Map.of());
             o.metric("task.duration", 42000, Map.of("task.type", "diagnosis"));
@@ -32,7 +33,8 @@ public final class ExtensionsExample {
     private static void send(Observability o, Map<String, Object> attrs, Map<String, Object> extra) {
         var logAttrs = new java.util.HashMap<>(attrs); logAttrs.putAll(extra);
         try (var span = o.trace("message/send", SignalKind.CLIENT, attrs)) {
-            o.log("gen_ai.agent.a2at.message", LogSeverity.INFO, "extension sample", logAttrs, span);
+            String body = "extension sample " + attrs.get("extension.name");
+            o.log("gen_ai.agent.a2at.message", LogSeverity.INFO, body, logAttrs, span);
             span.ok();
         }
     }
