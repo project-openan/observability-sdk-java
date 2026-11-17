@@ -33,13 +33,18 @@ public final class AttributesConverter {
         Set<String> seen = new HashSet<>();
         for (Map.Entry<String, ?> item : input.entrySet()) {
             if (item.getKey() == null) throw new IllegalArgumentException();
-            String key = Definitions.shortName(item.getKey());
+            String rawKey = item.getKey();
+            String key = rawKey.startsWith(Definitions.A2A_PREFIX)
+                ? rawKey.substring(Definitions.A2A_PREFIX.length()) : Definitions.shortName(rawKey);
             Definitions.Attribute definition = Definitions.ATTRIBUTES.get(key);
-            if (definition == null || !seen.add(key) || definition.signals().indexOf(signal) < 0 || (dimensions != null && !dimensions.contains(key))) throw new IllegalArgumentException();
+            if (definition == null || (!rawKey.equals(key) && !rawKey.equals(definition.name()))
+                || !seen.add(key) || definition.signals().indexOf(signal) < 0 || (dimensions != null && !dimensions.contains(key))) throw new IllegalArgumentException();
             Object value = item.getValue();
             if (definition.integer()) {
                 if (!(value instanceof Byte || value instanceof Short || value instanceof Integer || value instanceof Long)) throw new IllegalArgumentException();
-                output.put(Definitions.PREFIX + key, ((Number) value).longValue());
+                long number = ((Number) value).longValue();
+                if (key.equals("parts.number") && number < 0) throw new IllegalArgumentException();
+                output.put(definition.name(), number);
             } else {
                 if (!(value instanceof String)) throw new IllegalArgumentException();
                 String s = (String) value;
@@ -47,12 +52,19 @@ public final class AttributesConverter {
                     s = s.toLowerCase(Locale.ROOT);
                     if (!definition.values().contains(s)) throw new IllegalArgumentException();
                 }
-                output.put(Definitions.PREFIX + key, clean(s));
+                if (key.equals("gen_ai.system") && !s.equals("A2A")) throw new IllegalArgumentException();
+                if (key.equals("operation.name") && s.isBlank()) throw new IllegalArgumentException();
+                output.put(definition.name(), clean(s));
             }
         }
         return output.build();
     }
     public static Definitions.Signal selectSignal(Map<String, ?> input, Map<String, Definitions.Signal> definitions) {
+        Definitions.Signal definition = selectOptionalSignal(input, definitions);
+        if (definition == null) throw new IllegalArgumentException();
+        return definition;
+    }
+    public static Definitions.Signal selectOptionalSignal(Map<String, ?> input, Map<String, Definitions.Signal> definitions) {
         if (input == null) throw new IllegalArgumentException();
         Object extension = null;
         boolean found = false;
@@ -63,6 +75,7 @@ public final class AttributesConverter {
                 extension = entry.getValue();
             }
         }
+        if (!found) return null;
         if (!(extension instanceof String)) throw new IllegalArgumentException();
         Definitions.Signal definition = definitions.get(((String) extension).toLowerCase(Locale.ROOT));
         if (definition == null) throw new IllegalArgumentException();
