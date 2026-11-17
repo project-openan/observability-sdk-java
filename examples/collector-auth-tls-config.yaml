@@ -1,0 +1,47 @@
+extensions:
+  bearertokenauth/local:
+    scheme: Bearer
+    token: ${env:OTEL_TEST_BEARER_TOKEN}
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: ${env:OTEL_TEST_GRPC_ENDPOINT:-127.0.0.1:4317}
+        tls:
+          cert_file: ${env:OTEL_TEST_CERTIFICATE_FILE}
+          key_file: ${env:OTEL_TEST_PRIVATE_KEY_FILE}
+        auth:
+          authenticator: bearertokenauth/local
+      http:
+        endpoint: ${env:OTEL_TEST_HTTP_ENDPOINT:-127.0.0.1:4318}
+        tls:
+          cert_file: ${env:OTEL_TEST_CERTIFICATE_FILE}
+          key_file: ${env:OTEL_TEST_PRIVATE_KEY_FILE}
+        auth:
+          authenticator: bearertokenauth/local
+
+exporters:
+  debug:
+    verbosity: detailed
+
+service:
+  extensions: [bearertokenauth/local]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [debug]
+    metrics:
+      receivers: [otlp]
+      exporters: [debug]
+    logs:
+      receivers: [otlp]
+      exporters: [debug]
+  telemetry:
+    metrics:
+      readers:
+        - pull:
+            exporter:
+              prometheus:
+                host: '127.0.0.1'
+                port: 0
