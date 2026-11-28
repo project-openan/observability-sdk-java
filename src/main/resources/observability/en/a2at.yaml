@@ -3,48 +3,48 @@ signal: a2at
 description: 'A2A / A2A-T collaboration signals: Trace, Metric, and Log coverage for A2A protocol operations and the four A2A-T extensions'
 
 attributes:
-  operation.name: {otel_name: gen_ai.agent.a2a.operation.name, type: string, signals: SM, value_range: 'A2A operation name (e.g. SendMessage)', description: 'A2A operation name (e.g. SendMessage)'}
-  task_id: {otel_name: gen_ai.agent.a2a.task_id, type: string, signals: S, value_range: 'Free string', description: 'A2A task ID'}
-  context_id: {otel_name: gen_ai.agent.a2a.context_id, type: string, signals: S, value_range: 'Free string', description: 'A2A context ID'}
-  message_id: {otel_name: gen_ai.agent.a2a.message_id, type: string, signals: S, value_range: 'Free string', description: 'A2A message ID'}
-  role: {otel_name: gen_ai.agent.a2a.role, type: string, signals: S, value_range: 'user / agent', description: 'Message role (user/agent)'}
-  extensions: {otel_name: gen_ai.agent.a2a.extensions, type: string, signals: S, value_range: 'Free string, extension identifier list', description: 'A2A extension identifiers carried by the request'}
-  parts.number: {otel_name: gen_ai.agent.a2a.parts.number, type: integer, signals: S, value_range: 'Non-negative integer', description: 'Number of message parts, non-negative integer'}
-  config_id: {otel_name: gen_ai.agent.a2a.config_id, type: string, signals: S, value_range: 'Free string', description: 'Push notification config ID'}
-  request: {otel_name: gen_ai.agent.a2a.request, type: string, signals: S, value_range: 'Free string, redacted before recording', description: 'Request content, redacted before recording'}
-  response: {otel_name: gen_ai.agent.a2a.response, type: string, signals: S, value_range: 'Free string, redacted before recording', description: 'Response content, redacted before recording'}
-  streaming-event: {otel_name: gen_ai.agent.a2a.streaming-event, type: string, signals: S, value_range: 'Free string (e.g. status update)', description: 'Streaming event type'}
-  error.type: {otel_name: error.type, type: string, signals: SM, value_range: 'Low-cardinality error code (e.g. timeout)', description: 'Error type, low-cardinality error code, OTel standard attribute'}
-  gen_ai.system: {otel_name: gen_ai.system, type: string, signals: M, value_range: 'Only a2a allowed (enforced at runtime)', description: 'GenAI system identifier, OTel standard attribute; this SDK only allows the value a2a'}
-  gen_ai.provider.name: {otel_name: gen_ai.provider.name, type: string, signals: SM, value_range: 'Provider name (e.g. openai)', description: 'Model provider, OTel GenAI standard attribute (e.g. openai)'}
-  gen_ai.operation.name: {otel_name: gen_ai.operation.name, type: string, signals: SM, value_range: 'E.g. chat/generate_content', description: 'GenAI operation name, OTel GenAI standard attribute (e.g. chat/generate_content)'}
-  gen_ai.agent.id: {otel_name: gen_ai.agent.id, type: string, signals: S, value_range: 'Free string', description: 'Agent identifier, OTel GenAI standard attribute'}
-  gen_ai.agent.version: {otel_name: gen_ai.agent.version, type: string, signals: S, value_range: 'Version string', description: 'Agent version, OTel GenAI standard attribute'}
-  push_notification.event_kind: {otel_name: gen_ai.agent.a2a.push_notification.event_kind, type: string, signals: S, value_range: 'E.g. task-status', description: 'Push notification event type (e.g. task-status)'}
-  transport: {otel_name: gen_ai.agent.a2a.transport, type: string, signals: S, value_range: 'E.g. jsonrpc/http', description: 'Transport (e.g. jsonrpc/http)'}
-  protocol.version: {otel_name: gen_ai.agent.a2a.protocol.version, type: string, signals: S, value_range: 'E.g. 0.3', description: 'A2A protocol version'}
-  task.status.state: {otel_name: gen_ai.agent.a2a.task.status.state, type: string, signals: S, value_range: 'A2A task state (submitted/working/completed/failed, etc.)', description: 'A2A task state (e.g. submitted/working/completed)'}
-  usage.input_tokens: {otel_name: gen_ai.usage.input_tokens, type: integer, signals: S, value_range: 'Non-negative integer', description: 'Input tokens of a single call, OTel GenAI standard attribute'}
-  usage.output_tokens: {otel_name: gen_ai.usage.output_tokens, type: integer, signals: S, value_range: 'Non-negative integer', description: 'Output tokens of a single call, OTel GenAI standard attribute'}
-  artifact.name: {otel_name: a2a.artifact.name, type: string, signals: S, value_range: 'Free string', description: 'Artifact name of a streaming response, A2A standard attribute'}
-  artifact.append: {otel_name: a2a.artifact.append, type: boolean, signals: S, value_range: 'true / false', description: 'Whether appended to an existing artifact, A2A standard attribute'}
-  artifact.last_chunk: {otel_name: a2a.artifact.last_chunk, type: boolean, signals: S, value_range: 'true / false', description: 'Whether this is the last chunk, A2A standard attribute'}
-  extension.name: {otel_name: gen_ai.agent.a2at.extension.name, type: string, values: [task-t, negotiation-t, notification-t, authorization-t], value_range: 'task-t / negotiation-t / notification-t / authorization-t (enum-enforced)', description: 'A2A-T extension name, enum-enforced; acts as the branch field that selects the extension attribute whitelist'}
-  task.type: {otel_name: gen_ai.agent.a2at.task.type, type: string, value_range: 'Low-cardinality task type (e.g. diagnosis), non-blank under Task-T', description: 'Task type, low cardinality (e.g. diagnosis)'}
-  task.object: {otel_name: gen_ai.agent.a2at.task.object, type: string, value_range: 'Free string', description: 'Task object or goal'}
-  task.status: {otel_name: gen_ai.agent.a2at.task.status, type: string, value_range: 'Conventional completed/failed/cancelled', description: 'Task terminal state, used to compute the task success rate'}
-  negotiation.id: {otel_name: gen_ai.agent.a2at.negotiation.id, type: string, value_range: 'Free string', description: 'Negotiation process identifier'}
-  negotiation.round: {otel_name: gen_ai.agent.a2at.negotiation.round, type: integer, value_range: 'Positive integer', description: 'Current negotiation round, positive integer'}
-  negotiation.total_rounds: {otel_name: gen_ai.agent.a2at.negotiation.total_rounds, type: integer, value_range: 'Positive integer', description: 'Actual total negotiation rounds, positive integer'}
-  negotiation.max_rounds: {otel_name: gen_ai.agent.a2at.negotiation.max_rounds, type: integer, value_range: 'Positive integer', description: 'Negotiation round limit, positive integer'}
-  negotiation.result: {otel_name: gen_ai.agent.a2at.negotiation.result, type: string, value_range: 'Conventional accepted/rejected, etc.', description: 'Negotiation result (conventional accepted/rejected, etc.)'}
-  negotiation.performative: {otel_name: gen_ai.agent.a2at.negotiation.performative, type: string, value_range: 'E.g. propose/accept/reject', description: 'Negotiation speech act (e.g. propose/accept/reject)'}
-  notification.topic: {otel_name: gen_ai.agent.a2at.notification.topic, type: string, value_range: 'Low-cardinality notification topic', description: 'Notification topic, low cardinality'}
-  notification.result: {otel_name: gen_ai.agent.a2at.notification.result, type: string, value_range: 'Conventional sent/failed', description: 'Notification delivery result, used to compute the notification success rate'}
-  push.notification.url: {otel_name: gen_ai.agent.a2at.push.notification.url, type: string, value_range: 'URL string, redacted before recording', description: 'Push notification callback URL, redacted before recording'}
-  authorization.stage: {otel_name: gen_ai.agent.a2at.authorization.stage, type: string, value_range: 'E.g. preauthorize/execute/manual-review', description: 'Authorization stage (e.g. preauthorize/execute/manual-review)'}
-  authorization.policy.operation.type: {otel_name: gen_ai.agent.a2at.authorization.policy.operation.type, type: string, value_range: 'Low-cardinality policy operation type', description: 'Authorization policy operation type, low cardinality'}
-  authorization.result: {otel_name: gen_ai.agent.a2at.authorization.result, type: string, value_range: 'Conventional allowed/denied; record error for failed execution', description: 'Authorization decision result, used to compute the authorization pass rate'}
+  operation.name: {otel_name: gen_ai.agent.a2a.operation.name, type: string, source: a2a, signals: SM, value_range: 'A2A operation name (e.g. SendMessage)', description: 'A2A operation name (e.g. SendMessage)'}
+  task_id: {otel_name: gen_ai.agent.a2a.task_id, type: string, source: a2a, signals: S, value_range: 'Free string', description: 'A2A task ID'}
+  context_id: {otel_name: gen_ai.agent.a2a.context_id, type: string, source: a2a, signals: S, value_range: 'Free string', description: 'A2A context ID'}
+  message_id: {otel_name: gen_ai.agent.a2a.message_id, type: string, source: a2a, signals: S, value_range: 'Free string', description: 'A2A message ID'}
+  role: {otel_name: gen_ai.agent.a2a.role, type: string, source: a2a, signals: S, value_range: 'user / agent', description: 'Message role (user/agent)'}
+  extensions: {otel_name: gen_ai.agent.a2a.extensions, type: string, source: a2a, signals: S, value_range: 'Free string, extension identifier list', description: 'A2A extension identifiers carried by the request'}
+  parts.number: {otel_name: gen_ai.agent.a2a.parts.number, type: integer, source: a2a, signals: S, value_range: 'Non-negative integer', description: 'Number of message parts, non-negative integer'}
+  config_id: {otel_name: gen_ai.agent.a2a.config_id, type: string, source: a2a, signals: S, value_range: 'Free string', description: 'Push notification config ID'}
+  request: {otel_name: gen_ai.agent.a2a.request, type: string, source: a2a, signals: S, value_range: 'Free string, redacted before recording', description: 'Request content, redacted before recording'}
+  response: {otel_name: gen_ai.agent.a2a.response, type: string, source: a2a, signals: S, value_range: 'Free string, redacted before recording', description: 'Response content, redacted before recording'}
+  streaming-event: {otel_name: gen_ai.agent.a2a.streaming-event, type: string, source: a2a, signals: S, value_range: 'Free string (e.g. status update)', description: 'Streaming event type'}
+  error.type: {otel_name: error.type, type: string, source: gen_ai, signals: SM, value_range: 'Low-cardinality error code (e.g. timeout)', description: 'Error type, low-cardinality error code, OTel standard attribute'}
+  gen_ai.system: {otel_name: gen_ai.system, type: string, source: gen_ai, signals: M, value_range: 'Only a2a allowed (enforced at runtime)', description: 'GenAI system identifier, OTel standard attribute; this SDK only allows the value a2a'}
+  gen_ai.provider.name: {otel_name: gen_ai.provider.name, type: string, source: gen_ai, signals: SM, value_range: 'Provider name (e.g. openai)', description: 'Model provider, OTel GenAI standard attribute (e.g. openai)'}
+  gen_ai.operation.name: {otel_name: gen_ai.operation.name, type: string, source: gen_ai, signals: SM, value_range: 'E.g. chat/generate_content', description: 'GenAI operation name, OTel GenAI standard attribute (e.g. chat/generate_content)'}
+  gen_ai.agent.id: {otel_name: gen_ai.agent.id, type: string, source: gen_ai, signals: S, value_range: 'Free string', description: 'Agent identifier, OTel GenAI standard attribute'}
+  gen_ai.agent.version: {otel_name: gen_ai.agent.version, type: string, source: gen_ai, signals: S, value_range: 'Version string', description: 'Agent version, OTel GenAI standard attribute'}
+  push_notification.event_kind: {otel_name: gen_ai.agent.a2a.push_notification.event_kind, type: string, source: a2a, signals: S, value_range: 'E.g. task-status', description: 'Push notification event type (e.g. task-status)'}
+  transport: {otel_name: gen_ai.agent.a2a.transport, type: string, source: a2a, signals: S, value_range: 'E.g. jsonrpc/http', description: 'Transport (e.g. jsonrpc/http)'}
+  protocol.version: {otel_name: gen_ai.agent.a2a.protocol.version, type: string, source: a2a, signals: S, value_range: 'E.g. 0.3', description: 'A2A protocol version'}
+  task.status.state: {otel_name: gen_ai.agent.a2a.task.status.state, type: string, source: a2a, signals: S, value_range: 'A2A task state (submitted/working/completed/failed, etc.)', description: 'A2A task state (e.g. submitted/working/completed)'}
+  usage.input_tokens: {otel_name: gen_ai.usage.input_tokens, type: integer, source: gen_ai, signals: S, value_range: 'Non-negative integer', description: 'Input tokens of a single call, OTel GenAI standard attribute'}
+  usage.output_tokens: {otel_name: gen_ai.usage.output_tokens, type: integer, source: gen_ai, signals: S, value_range: 'Non-negative integer', description: 'Output tokens of a single call, OTel GenAI standard attribute'}
+  artifact.name: {otel_name: gen_ai.agent.a2at.artifact.name, type: string, source: a2a, signals: S, value_range: 'Free string', description: 'Artifact name of a streaming response, A2A standard attribute'}
+  artifact.append: {otel_name: gen_ai.agent.a2at.artifact.append, type: boolean, source: a2a, signals: S, value_range: 'true / false', description: 'Whether appended to an existing artifact, A2A standard attribute'}
+  artifact.last_chunk: {otel_name: gen_ai.agent.a2at.artifact.last_chunk, type: boolean, source: a2a, signals: S, value_range: 'true / false', description: 'Whether this is the last chunk, A2A standard attribute'}
+  extension.name: {otel_name: gen_ai.agent.a2at.extension.name, type: string, source: openan, values: [task-t, negotiation-t, notification-t, authorization-t], value_range: 'task-t / negotiation-t / notification-t / authorization-t (enum-enforced)', description: 'A2A-T extension name, enum-enforced; acts as the branch field that selects the extension attribute whitelist'}
+  task.type: {otel_name: gen_ai.agent.a2at.task.type, type: string, source: openan, value_range: 'Low-cardinality task type (e.g. diagnosis), non-blank under Task-T', description: 'Task type, low cardinality (e.g. diagnosis)'}
+  task.object: {otel_name: gen_ai.agent.a2at.task.object, type: string, source: openan, value_range: 'Free string', description: 'Task object or goal'}
+  task.status: {otel_name: gen_ai.agent.a2at.task.status, type: string, source: openan, value_range: 'Conventional completed/failed/cancelled', description: 'Task terminal state, used to compute the task success rate'}
+  negotiation.id: {otel_name: gen_ai.agent.a2at.negotiation.id, type: string, source: openan, value_range: 'Free string', description: 'Negotiation process identifier'}
+  negotiation.round: {otel_name: gen_ai.agent.a2at.negotiation.round, type: integer, source: openan, value_range: 'Positive integer', description: 'Current negotiation round, positive integer'}
+  negotiation.total_rounds: {otel_name: gen_ai.agent.a2at.negotiation.total_rounds, type: integer, source: openan, value_range: 'Positive integer', description: 'Actual total negotiation rounds, positive integer'}
+  negotiation.max_rounds: {otel_name: gen_ai.agent.a2at.negotiation.max_rounds, type: integer, source: openan, value_range: 'Positive integer', description: 'Negotiation round limit, positive integer'}
+  negotiation.result: {otel_name: gen_ai.agent.a2at.negotiation.result, type: string, source: openan, value_range: 'Conventional accepted/rejected, etc.', description: 'Negotiation result (conventional accepted/rejected, etc.)'}
+  negotiation.performative: {otel_name: gen_ai.agent.a2at.negotiation.performative, type: string, source: openan, value_range: 'E.g. propose/accept/reject', description: 'Negotiation speech act (e.g. propose/accept/reject)'}
+  notification.topic: {otel_name: gen_ai.agent.a2at.notification.topic, type: string, source: openan, value_range: 'Low-cardinality notification topic', description: 'Notification topic, low cardinality'}
+  notification.result: {otel_name: gen_ai.agent.a2at.notification.result, type: string, source: openan, value_range: 'Conventional sent/failed', description: 'Notification delivery result, used to compute the notification success rate'}
+  push.notification.url: {otel_name: gen_ai.agent.a2at.push.notification.url, type: string, source: openan, value_range: 'URL string, redacted before recording', description: 'Push notification callback URL, redacted before recording'}
+  authorization.stage: {otel_name: gen_ai.agent.a2at.authorization.stage, type: string, source: openan, value_range: 'E.g. preauthorize/execute/manual-review', description: 'Authorization stage (e.g. preauthorize/execute/manual-review)'}
+  authorization.policy.operation.type: {otel_name: gen_ai.agent.a2at.authorization.policy.operation.type, type: string, source: openan, value_range: 'add/modify/delete', description: 'Authorization policy operation type, low cardinality'}
+  authorization.result: {otel_name: gen_ai.agent.a2at.authorization.result, type: string, source: openan, value_range: 'Conventional allowed/denied; record error for failed execution', description: 'Authorization decision result, used to compute the authorization pass rate'}
 
 metrics:
   gen_ai.client.operation.duration:
@@ -214,7 +214,7 @@ traces:
 
 logs:
   message:
-    name: gen_ai.agent.a2at.message
+    name: message
     source: openan
     description: 'A2A-T message log; must carry extension.name to select the log attribute whitelist of the matching extension'
 

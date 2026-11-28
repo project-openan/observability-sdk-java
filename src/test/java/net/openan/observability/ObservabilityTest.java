@@ -54,7 +54,7 @@ class ObservabilityTest {
     @Test void taskSignalsAreConvertedAndLinked() {
         Map<String, String> attrs = Map.of("extension.name", "TASK-T", "task.type", "diagnosis", "task.object", "demo");
         ObservationSpan span = observe.trace("SendMessage", SignalKind.CLIENT, attrs);
-        observe.log("gen_ai.agent.a2at.message", LogSeverity.INFO, "token=abc https://u:p@example.com/path?token=x", attrs, span);
+        observe.log("message", LogSeverity.INFO, "token=abc https://u:p@example.com/path?token=x", attrs, span);
         observe.metric("task.duration", 42000, Map.of("task.type", "diagnosis", "task.object", "demo"), span);
         observe.metric("task.count", 1, Map.of("task.type", "diagnosis", "task.status", "completed"), span);
         span.ok(); span.end(); span.end();
@@ -62,7 +62,7 @@ class ObservabilityTest {
         assertEquals(1, spans.getFinishedSpanItems().size());
         assertEquals("task-t", data.getAttributes().get(AttributeKey.stringKey(Definitions.PREFIX + "extension.name")));
         var log = logs.getFinishedLogRecordItems().get(0);
-        assertEquals("gen_ai.agent.a2at.message", log.getEventName());
+        assertEquals("message", log.getEventName());
         assertEquals(data.getTraceId(), log.getSpanContext().getTraceId());
         assertEquals(data.getSpanId(), log.getSpanContext().getSpanId());
         assertFalse(log.getBody().asString().contains("abc"));
@@ -193,8 +193,8 @@ class ObservabilityTest {
         observe.trace("SendMessage", SignalKind.CLIENT, Map.of("extension.name", "task-t", "task.type", " ")).end();
         observe.trace("SendMessage", SignalKind.CLIENT, Map.of("extension.name", "task-t", "task.type", "x", "negotiation.id", "x")).end();
         observe.log("unknown", LogSeverity.INFO, "body", task());
-        observe.log("gen_ai.agent.a2at.message", LogSeverity.INFO, null, task());
-        observe.log("gen_ai.agent.a2at.message", LogSeverity.INFO, "body", Map.of("extension.name", "task-t"));
+        observe.log("message", LogSeverity.INFO, null, task());
+        observe.log("message", LogSeverity.INFO, "body", Map.of("extension.name", "task-t"));
         observe.metric("unknown", 1, task());
         observe.metric("task.count", 1, Map.of());
         observe.metric("task.count", 999, Map.of("task.type", "x", "extension.name", "task-t"));
@@ -214,7 +214,7 @@ class ObservabilityTest {
             var rejected = observe.trace("unknown", SignalKind.CLIENT, task());
             try (var ignored = rejected.makeCurrent()) {
                 observe.trace("SendMessage", SignalKind.CLIENT, task()).end();
-                observe.log("gen_ai.agent.a2at.message", LogSeverity.INFO, "body", task(), rejected);
+                observe.log("message", LogSeverity.INFO, "body", task(), rejected);
             }
             observe.trace("SendMessage", SignalKind.CLIENT, task(), rejected).end();
         }
@@ -228,7 +228,7 @@ class ObservabilityTest {
     @Test void aliasesAggregationAndConversion() {
         var full = Map.of(Definitions.PREFIX + "extension.name", "TASK-T", Definitions.PREFIX + "task.type", "diagnosis", Definitions.PREFIX + "task.object", "token=abc");
         var span = observe.trace("SendMessage", SignalKind.CLIENT, full);
-        observe.log("gen_ai.agent.a2at.message", LogSeverity.INFO, "body", full, span);
+        observe.log("message", LogSeverity.INFO, "body", full, span);
         observe.metric(Definitions.PREFIX + "task.duration", 2.5, Map.of(Definitions.PREFIX + "task.type", "diagnosis"));
         observe.metric("task.duration", 3.5, Map.of("task.type", "diagnosis"));
         span.ok(); span.end();

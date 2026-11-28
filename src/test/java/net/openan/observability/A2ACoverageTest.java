@@ -83,7 +83,7 @@ class A2ACoverageTest {
             assertEquals(6, spans.getFinishedSpanItems().size());
             var event = spans.getFinishedSpanItems().get(0);
             assertEquals("SendStreamingMessage-event", event.getName());
-            assertEquals(true, event.getAttributes().get(AttributeKey.booleanKey("a2a.artifact.append")));
+            assertEquals(true, event.getAttributes().get(AttributeKey.booleanKey("gen_ai.agent.a2at.artifact.append")));
             assertEquals("working", event.getAttributes().get(AttributeKey.stringKey("gen_ai.agent.a2a.task.status.state")));
             var subscribeEvent = spans.getFinishedSpanItems().get(1);
             assertEquals("SubscribeToTask-event", subscribeEvent.getName());

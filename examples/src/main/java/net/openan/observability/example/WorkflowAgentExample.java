@@ -40,14 +40,14 @@ public final class WorkflowAgentExample {
                 "workflow.type", "fault-diagnosis",
                 "workflow.status", "running",
                 "workflow.session_id", "session-" + runId);
-            try (var workflowSpan = observe.trace("a2at.workflow", SignalKind.INTERNAL, workflow);
+            try (var workflowSpan = observe.trace("workflow", SignalKind.INTERNAL, workflow);
                  var workflowScope = workflowSpan.makeCurrent()) {
                 runStep(observe, runId);
                 observe.metric("workflow.duration", 180, Map.of(
                     "workflow.type", "fault-diagnosis", "workflow.status", "completed"));
                 observe.metric("workflow.count", 1, Map.of(
                     "workflow.type", "fault-diagnosis", "workflow.status", "completed"));
-                observe.log("gen_ai.agent.a2at.workflow", LogSeverity.INFO, "workflow completed " + runId, Map.of(
+                observe.log("workflow", LogSeverity.INFO, "workflow completed " + runId, Map.of(
                     "workflow.id", "wf-" + runId,
                     "workflow.type", "fault-diagnosis",
                     "workflow.status", "completed",
@@ -64,11 +64,11 @@ public final class WorkflowAgentExample {
             "workflow.step.id", "step-1",
             "workflow.step.status", "completed",
             "workflow.step.owner_agent", "diagnosis-agent");
-        try (var stepSpan = observe.trace("a2at.step.retrieve-alarms", SignalKind.INTERNAL, step);
+        try (var stepSpan = observe.trace("step.retrieve-alarms", SignalKind.INTERNAL, step);
              var stepScope = stepSpan.makeCurrent()) {
             observe.metric("step.duration", 75, Map.of(
                 "workflow.step.status", "success", "gen_ai.agent.name", "diagnosis-agent"));
-            observe.log("gen_ai.agent.a2at.step", LogSeverity.INFO, "step completed " + runId, step, stepSpan);
+            observe.log("step", LogSeverity.INFO, "step completed " + runId, step, stepSpan);
             runAgent(observe, runId);
             stepSpan.ok();
         }
@@ -79,7 +79,7 @@ public final class WorkflowAgentExample {
             "gen_ai.agent.name", "diagnosis-agent",
             "substep.name", "retrieve-alarms",
             "substep.status", "completed");
-        try (var agentSpan = observe.trace("a2at.substep.retrieve-alarms", SignalKind.INTERNAL, substep)) {
+        try (var agentSpan = observe.trace("substep.retrieve-alarms", SignalKind.INTERNAL, substep)) {
             observe.metric("substep.duration", 50, Map.of(
                 "substep.status", "success", "gen_ai.agent.name", "diagnosis-agent"));
             observe.metric("gen_ai.client.inference.usage.input_tokens", 120, Map.of(
@@ -88,12 +88,12 @@ public final class WorkflowAgentExample {
                 "gen_ai.token.modality", "text",
                 "gen_ai.agent.name", "diagnosis-agent",
                 "gen_ai.request.model", "model-1"));
-            observe.log("gen_ai.agent.a2at.agent", LogSeverity.INFO, "agent completed " + runId, Map.of(
+            observe.log("agent", LogSeverity.INFO, "agent completed " + runId, Map.of(
                 "gen_ai.agent.name", "diagnosis-agent",
                 "agent.role", "fault-diagnosis",
                 "agent.skills", List.of("alarm-search"),
                 "agent.state", "completed"), agentSpan);
-            observe.log("gen_ai.agent.a2at.substep", LogSeverity.INFO, "agent substep completed " + runId, Map.of(
+            observe.log("substep", LogSeverity.INFO, "agent substep completed " + runId, Map.of(
                 "gen_ai.agent.name", "diagnosis-agent",
                 "substep.name", "retrieve-alarms",
                 "substep.status", "completed",

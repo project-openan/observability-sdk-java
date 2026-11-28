@@ -16,9 +16,9 @@
 
 | 分类 | Trace | Metric | Log | 定义文件 |
 |---|---|---|---|---|
-| A2A / A2A-T | A2A 消息、任务和流式调用；四种 A2A-T 扩展 | 2 项 A2A 指标、8 项 A2A-T 指标 | `gen_ai.agent.a2at.message` | [`a2at.yaml`](src/main/resources/observability/zh/a2at.yaml) |
-| Workflow | `a2at.workflow`、`a2at.step.<name>` | `workflow.duration`、`workflow.count`、`step.duration`、`step.count` | Workflow 与 Step 事件 | [`workflow.yaml`](src/main/resources/observability/zh/workflow.yaml) |
-| Agent | `a2at.substep.<name>` | `substep.duration`、`substep.count`、`gen_ai.client.inference.usage.input_tokens` / `output_tokens` | Agent 生命周期与 Substep 事件 | [`agent.yaml`](src/main/resources/observability/zh/agent.yaml) |
+| A2A / A2A-T | A2A 消息、任务和流式调用；四种 A2A-T 扩展 | 2 项 A2A 指标、8 项 A2A-T 指标 | `message` | [`a2at.yaml`](src/main/resources/observability/zh/a2at.yaml) |
+| Workflow | `workflow`、`step.<name>` | `workflow.duration`、`workflow.count`、`step.duration`、`step.count` | Workflow 与 Step 事件 | [`workflow.yaml`](src/main/resources/observability/zh/workflow.yaml) |
+| Agent | `substep.<name>` | `substep.duration`、`substep.count`、`gen_ai.client.inference.usage.input_tokens` / `output_tokens` | Agent 生命周期与 Substep 事件 | [`agent.yaml`](src/main/resources/observability/zh/agent.yaml) |
 
 三份 YAML 均包含版本、属性类型、信号名称、指标维度和必填属性。调整标准时修改对应 YAML 并递增 `version`；SDK 在导出前按信号名称和属性白名单校验输入。
 
@@ -76,7 +76,7 @@ try (var sdk = ObservabilitySdk.start(SdkConfig.builder()
     // A2A-T：Task-T 消息、日志和指标。
     var task = Map.of("extension.name", "task-t", "task.type", "diagnosis");
     try (var span = observe.trace("SendMessage", SignalKind.CLIENT, task)) {
-        observe.log("gen_ai.agent.a2at.message", LogSeverity.INFO,
+        observe.log("message", LogSeverity.INFO,
             "diagnosis completed", task, span);
         observe.metric("task.duration", 42_000, Map.of("task.type", "diagnosis"));
         observe.metric("task.count", 1, Map.of("task.type", "diagnosis"));
@@ -88,7 +88,7 @@ try (var sdk = ObservabilitySdk.start(SdkConfig.builder()
         "workflow.id", "wf-001",
         "workflow.type", "fault-diagnosis",
         "workflow.status", "running");
-    try (var span = observe.trace("a2at.workflow", SignalKind.INTERNAL, workflow)) {
+    try (var span = observe.trace("workflow", SignalKind.INTERNAL, workflow)) {
         observe.metric("workflow.duration", 42, Map.of(
             "workflow.type", "fault-diagnosis",
             "workflow.status", "completed"));
@@ -100,14 +100,14 @@ try (var sdk = ObservabilitySdk.start(SdkConfig.builder()
         "gen_ai.agent.name", "diagnosis-agent",
         "substep.name", "retrieve-alarms",
         "substep.status", "active");
-    try (var span = observe.trace("a2at.substep.retrieve-alarms", SignalKind.INTERNAL, substep)) {
+    try (var span = observe.trace("substep.retrieve-alarms", SignalKind.INTERNAL, substep)) {
         observe.metric("gen_ai.client.inference.usage.input_tokens", 120, Map.of(
             "gen_ai.operation.name", "chat",
             "gen_ai.provider.name", "openai",
             "gen_ai.token.modality", "text",
             "gen_ai.agent.name", "diagnosis-agent",
             "gen_ai.request.model", "model-1"));
-        observe.log("gen_ai.agent.a2at.agent", LogSeverity.INFO, "agent running", Map.of(
+        observe.log("agent", LogSeverity.INFO, "agent running", Map.of(
             "gen_ai.agent.name", "diagnosis-agent",
             "agent.state", "running"), span);
         span.ok();
@@ -150,19 +150,19 @@ try (var scope = TraceContextPropagation.extractToCurrent(requestHeaders, header
 - A2A Trace 支持 `SendMessage`、`SendStreamingMessage`、`SendStreamingMessage-event`、`SendStreamingMessage-end` 与各任务操作（`GetTask`、`CancelTask`、`ListTasks`、`SubscribeToTask` 及推送通知配置操作）；流事件可关联上游 Span Link。
 - A2A 指标为 `gen_ai.client.operation.duration` 与 `gen_ai.agent.a2a.streaming.duration`，均要求 `operation.name`。
 - A2A-T 包含 Task-T、Negotiation-T、Notification-T、Authorization-T 四种扩展，以及 `task.duration`、`task.count`、`negotiation.rounds`、`negotiation.count`、`notification.count` 和三项 Authorization 指标。
-- `SendMessage`、`SendStreamingMessage` 和 `gen_ai.agent.a2at.message` 使用 `extension.name` 选择对应扩展属性。Task-T 的 `task.type` 必填且不能为空。
+- `SendMessage`、`SendStreamingMessage` 和 `message` 使用 `extension.name` 选择对应扩展属性。Task-T 的 `task.type` 必填且不能为空。
 
 ### Workflow
 
-- `a2at.workflow` 要求 `workflow.id`、`workflow.type`、`workflow.status`；`a2at.step.<name>` 要求步骤名称、步骤 ID 和状态。
+- `workflow` 要求 `workflow.id`、`workflow.type`、`workflow.status`；`step.<name>` 要求步骤名称、步骤 ID 和状态。
 - `workflow.duration`、`workflow.count` 要求 `workflow.type` 与 `workflow.status`；`step.duration`、`step.count` 要求步骤终态 `workflow.step.status`（约定 `success` / `failed`）与 `gen_ai.agent.name`。
-- Log 名称为 `gen_ai.agent.a2at.workflow` 和 `gen_ai.agent.a2at.step`。
+- Log 名称为 `workflow` 和 `step`。
 
 ### Agent
 
-- `a2at.substep.<name>` 要求 `gen_ai.agent.name`、`substep.name` 和 `substep.status`。
+- `substep.<name>` 要求 `gen_ai.agent.name`、`substep.name` 和 `substep.status`。
 - `substep.duration`、`substep.count` 要求子步骤终态 `substep.status`（约定 `success` / `failed`）与 Agent 名称；`gen_ai.client.inference.usage.input_tokens` / `output_tokens` 要求 GenAI 操作、提供方与 Token 模态（Agent、模型为可选维度）。
-- Log 名称为 `gen_ai.agent.a2at.agent` 和 `gen_ai.agent.a2at.substep`；`agent.skills` 传非空字符串列表。
+- Log 名称为 `agent` 和 `substep`；`agent.skills` 传非空字符串列表。
 
 短属性名和带 `gen_ai.agent.a2at.` 前缀的属性名都可传入，SDK 导出时使用 YAML 中的 OTel 名称。同一属性同时使用短名和全名时，该条信号会被拒绝。非法 Trace、Metric 或 Log 不会发送到 Collector，并会输出不带输入值的诊断日志。
 

@@ -16,9 +16,9 @@ Application code ──> Observability SDK ──> OpenTelemetry SDK ──OTLP�
 
 | Category | Traces | Metrics | Logs | Definition |
 |---|---|---|---|---|
-| A2A / A2A-T | A2A messages, tasks, and streaming calls; four A2A-T extensions | 2 A2A metrics and 8 A2A-T metrics | `gen_ai.agent.a2at.message` | [`a2at.yaml`](src/main/resources/observability/en/a2at.yaml) |
-| Workflow | `a2at.workflow`, `a2at.step.<name>` | `workflow.duration`, `workflow.count`, `step.duration`, `step.count` | Workflow and step events | [`workflow.yaml`](src/main/resources/observability/en/workflow.yaml) |
-| Agent | `a2at.substep.<name>` | `substep.duration`, `substep.count`, `gen_ai.client.inference.usage.input_tokens` / `output_tokens` | Agent lifecycle and substep events | [`agent.yaml`](src/main/resources/observability/en/agent.yaml) |
+| A2A / A2A-T | A2A messages, tasks, and streaming calls; four A2A-T extensions | 2 A2A metrics and 8 A2A-T metrics | `message` | [`a2at.yaml`](src/main/resources/observability/en/a2at.yaml) |
+| Workflow | `workflow`, `step.<name>` | `workflow.duration`, `workflow.count`, `step.duration`, `step.count` | Workflow and step events | [`workflow.yaml`](src/main/resources/observability/en/workflow.yaml) |
+| Agent | `substep.<name>` | `substep.duration`, `substep.count`, `gen_ai.client.inference.usage.input_tokens` / `output_tokens` | Agent lifecycle and substep events | [`agent.yaml`](src/main/resources/observability/en/agent.yaml) |
 
 Each YAML file defines its version, attribute types, signal names, metric dimensions, and required attributes. Update the applicable YAML file and increment its `version` when the signal definition changes. The SDK validates signal names and attribute allowlists before export.
 
@@ -76,7 +76,7 @@ try (var sdk = ObservabilitySdk.start(SdkConfig.builder()
     // A2A-T: Task-T message, log, and metrics.
     var task = Map.of("extension.name", "task-t", "task.type", "diagnosis");
     try (var span = observe.trace("SendMessage", SignalKind.CLIENT, task)) {
-        observe.log("gen_ai.agent.a2at.message", LogSeverity.INFO,
+        observe.log("message", LogSeverity.INFO,
             "diagnosis completed", task, span);
         observe.metric("task.duration", 42_000, Map.of("task.type", "diagnosis"));
         observe.metric("task.count", 1, Map.of("task.type", "diagnosis"));
@@ -88,7 +88,7 @@ try (var sdk = ObservabilitySdk.start(SdkConfig.builder()
         "workflow.id", "wf-001",
         "workflow.type", "fault-diagnosis",
         "workflow.status", "running");
-    try (var span = observe.trace("a2at.workflow", SignalKind.INTERNAL, workflow)) {
+    try (var span = observe.trace("workflow", SignalKind.INTERNAL, workflow)) {
         observe.metric("workflow.duration", 42, Map.of(
             "workflow.type", "fault-diagnosis",
             "workflow.status", "completed"));
@@ -100,14 +100,14 @@ try (var sdk = ObservabilitySdk.start(SdkConfig.builder()
         "gen_ai.agent.name", "diagnosis-agent",
         "substep.name", "retrieve-alarms",
         "substep.status", "active");
-    try (var span = observe.trace("a2at.substep.retrieve-alarms", SignalKind.INTERNAL, substep)) {
+    try (var span = observe.trace("substep.retrieve-alarms", SignalKind.INTERNAL, substep)) {
         observe.metric("gen_ai.client.inference.usage.input_tokens", 120, Map.of(
             "gen_ai.operation.name", "chat",
             "gen_ai.provider.name", "openai",
             "gen_ai.token.modality", "text",
             "gen_ai.agent.name", "diagnosis-agent",
             "gen_ai.request.model", "model-1"));
-        observe.log("gen_ai.agent.a2at.agent", LogSeverity.INFO, "agent running", Map.of(
+        observe.log("agent", LogSeverity.INFO, "agent running", Map.of(
             "gen_ai.agent.name", "diagnosis-agent",
             "agent.state", "running"), span);
         span.ok();
@@ -150,19 +150,19 @@ try (var scope = TraceContextPropagation.extractToCurrent(requestHeaders, header
 - A2A traces support `SendMessage`, `SendStreamingMessage`, `SendStreamingMessage-event`, `SendStreamingMessage-end`, and the task operations (`GetTask`, `CancelTask`, `ListTasks`, `SubscribeToTask`, and the push-notification config operations). A stream event can hold a Span Link to its upstream span.
 - The A2A metrics are `gen_ai.client.operation.duration` and `gen_ai.agent.a2a.streaming.duration`; both require `operation.name`.
 - A2A-T includes Task-T, Negotiation-T, Notification-T, and Authorization-T. Metrics include `task.duration`, `task.count`, `negotiation.rounds`, `negotiation.count`, `notification.count`, and three Authorization metrics.
-- `SendMessage`, `SendStreamingMessage`, and `gen_ai.agent.a2at.message` use `extension.name` to select extension attributes. Task-T requires a non-blank `task.type`.
+- `SendMessage`, `SendStreamingMessage`, and `message` use `extension.name` to select extension attributes. Task-T requires a non-blank `task.type`.
 
 ### Workflow
 
-- `a2at.workflow` requires `workflow.id`, `workflow.type`, and `workflow.status`; `a2at.step.<name>` requires the step name, ID, and status.
+- `workflow` requires `workflow.id`, `workflow.type`, and `workflow.status`; `step.<name>` requires the step name, ID, and status.
 - `workflow.duration` and `workflow.count` require `workflow.type` and `workflow.status`; `step.duration` and `step.count` require the step outcome `workflow.step.status` (convention `success` / `failed`) and `gen_ai.agent.name`.
-- The log names are `gen_ai.agent.a2at.workflow` and `gen_ai.agent.a2at.step`.
+- The log names are `workflow` and `step`.
 
 ### Agent
 
-- `a2at.substep.<name>` requires `gen_ai.agent.name`, `substep.name`, and `substep.status`.
+- `substep.<name>` requires `gen_ai.agent.name`, `substep.name`, and `substep.status`.
 - `substep.duration` and `substep.count` require the substep outcome `substep.status` (convention `success` / `failed`) and the agent name; `gen_ai.client.inference.usage.input_tokens` / `output_tokens` require `gen_ai.operation.name`, `gen_ai.provider.name`, and `gen_ai.token.modality` (agent and model are optional dimensions).
-- The log names are `gen_ai.agent.a2at.agent` and `gen_ai.agent.a2at.substep`; provide `agent.skills` as a non-empty string list.
+- The log names are `agent` and `substep`; provide `agent.skills` as a non-empty string list.
 
 Short attribute names and `gen_ai.agent.a2at.`-prefixed attribute names are both accepted; the SDK exports the OpenTelemetry name declared in YAML. A signal is rejected if the same attribute is supplied in both forms. Rejected traces, metrics, and logs are not sent to the Collector, and diagnostics do not include input values.
 

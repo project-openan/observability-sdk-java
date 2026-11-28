@@ -57,7 +57,7 @@ class ExtensionCoverageTest {
                 var logAttrs = new HashMap<>(attrs);
                 if (attrs == NEG) logAttrs.put("negotiation.max_rounds", 4);
                 var span = observe.trace("SendMessage", SignalKind.CLIENT, attrs);
-                observe.log("gen_ai.agent.a2at.message", LogSeverity.INFO, "body", logAttrs, span);
+                observe.log("message", LogSeverity.INFO, "body", logAttrs, span);
                 span.end();
             }
             assertEquals(4, spans.getFinishedSpanItems().size()); assertEquals(4, logs.getFinishedLogRecordItems().size());
@@ -94,7 +94,7 @@ class ExtensionCoverageTest {
             o.trace("SendMessage", SignalKind.CLIENT, Map.of("extension.name", "negotiation-t", "task.type", "x")).end();
             o.trace("SendMessage", SignalKind.CLIENT, Map.of("extension.name", "negotiation-t", "negotiation.max_rounds", 2)).end();
             o.trace("SendMessage", SignalKind.CLIENT, Map.of("extension.name", "negotiation-t", "negotiation.round", "2")).end();
-            o.log("gen_ai.agent.a2at.message", LogSeverity.INFO, "body", Map.of("extension.name", "notification-t", "authorization.stage", "execute"));
+            o.log("message", LogSeverity.INFO, "body", Map.of("extension.name", "notification-t", "authorization.stage", "execute"));
             assertTrue(spans.getFinishedSpanItems().isEmpty()); assertTrue(logs.getFinishedLogRecordItems().isEmpty());
             var span = o.trace("SendMessage", SignalKind.SERVER, NEG);
             span.attributes(Map.of("negotiation.round", 5));
@@ -143,7 +143,7 @@ class ExtensionCoverageTest {
             for (String ext : List.of("negotiation-t", "notification-t", "authorization-t")) {
                 var attrs = Map.of(P + "extension.name", ext);
                 var span = o.trace("SendMessage", SignalKind.CLIENT, attrs);
-                o.log("gen_ai.agent.a2at.message", LogSeverity.INFO, "body", attrs, span); span.end();
+                o.log("message", LogSeverity.INFO, "body", attrs, span); span.end();
             }
             assertEquals(3, spans.getFinishedSpanItems().size()); assertEquals(3, logs.getFinishedLogRecordItems().size());
             o.trace("SendMessage", SignalKind.CLIENT, Map.of("extension.name", "task-t", P + "extension.name", "task-t", "task.type", "x")).end();

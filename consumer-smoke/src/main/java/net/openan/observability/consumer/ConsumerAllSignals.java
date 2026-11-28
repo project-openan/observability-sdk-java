@@ -33,7 +33,7 @@ import net.openan.observability.SignalKind;
 
 /** Independent consumer that emits every configured signal family as correlated flows. */
 public final class ConsumerAllSignals {
-    private static final String MESSAGE_LOG = "gen_ai.agent.a2at.message";
+    private static final String MESSAGE_LOG = "message";
 
     private ConsumerAllSignals() { }
 
@@ -100,27 +100,27 @@ public final class ConsumerAllSignals {
         Map<String, Object> step = Map.of(
             "workflow.step.name", stepName, "workflow.step.id", "step-1", "workflow.step.status", workflowStatus,
             "workflow.step.owner_agent", "consumer-agent");
-        try (var workflowSpan = observe.trace("a2at.workflow", SignalKind.INTERNAL, workflow)) {
+        try (var workflowSpan = observe.trace("workflow", SignalKind.INTERNAL, workflow)) {
             try (var workflowScope = workflowSpan.makeCurrent()) {
-                observe.log("gen_ai.agent.a2at.workflow", LogSeverity.INFO, "Workflow started", Map.ofEntries(
+                observe.log("workflow", LogSeverity.INFO, "Workflow started", Map.ofEntries(
                     Map.entry("workflow.id", "workflow-" + scenario + "-" + runId), Map.entry("workflow.type", workflowType),
                     Map.entry("workflow.status", "running"), Map.entry("workflow.session_id", "session-" + scenario + "-" + runId),
                     Map.entry("business.domain", "observability"), Map.entry("business.customer", "consumer")), workflowSpan);
-                try (var stepSpan = observe.trace("a2at.step.collect", SignalKind.INTERNAL, step, workflowSpan)) {
+                try (var stepSpan = observe.trace("step.collect", SignalKind.INTERNAL, step, workflowSpan)) {
                     try (var stepScope = stepSpan.makeCurrent()) {
-                        observe.log("gen_ai.agent.a2at.step", LogSeverity.INFO, "Workflow step started", Map.of(
+                        observe.log("step", LogSeverity.INFO, "Workflow step started", Map.of(
                             "workflow.step.name", stepName, "workflow.step.id", "step-1", "workflow.step.status", "running",
                             "workflow.step.owner_agent", "consumer-agent"), stepSpan);
                         emitAgentSignals(observe, runId, stepName, substepDuration, stepSpan, agentWork);
                         observe.metric("step.duration", stepDuration, Map.of(
                             "workflow.step.status", "completed".equals(workflowStatus) ? "success" : "failed", "gen_ai.agent.name", "consumer-agent"));
-                        observe.log("gen_ai.agent.a2at.step", LogSeverity.INFO, "Workflow step " + workflowStatus, step, stepSpan);
+                        observe.log("step", LogSeverity.INFO, "Workflow step " + workflowStatus, step, stepSpan);
                         stepSpan.ok();
                     }
                 }
                 observe.metric("workflow.duration", workflowDuration, Map.of("workflow.type", workflowType, "workflow.status", workflowStatus));
                 observe.metric("workflow.count", 1, Map.of("workflow.type", workflowType, "workflow.status", workflowStatus));
-                observe.log("gen_ai.agent.a2at.workflow", LogSeverity.INFO, "Workflow " + workflowStatus, Map.ofEntries(
+                observe.log("workflow", LogSeverity.INFO, "Workflow " + workflowStatus, Map.ofEntries(
                     Map.entry("workflow.id", "workflow-" + scenario + "-" + runId), Map.entry("workflow.type", workflowType),
                     Map.entry("workflow.status", workflowStatus), Map.entry("workflow.session_id", "session-" + scenario + "-" + runId),
                     Map.entry("business.domain", "observability"), Map.entry("business.customer", "consumer")), workflowSpan);
@@ -194,12 +194,12 @@ public final class ConsumerAllSignals {
             double substepDuration, ObservationSpan parent, Consumer<ObservationSpan> agentWork) {
         Map<String, Object> substep = Map.of(
             "gen_ai.agent.name", "consumer-agent", "substep.name", "analyze", "substep.status", "completed");
-        try (var span = observe.trace("a2at.substep.analyze", SignalKind.INTERNAL, substep, parent)) {
+        try (var span = observe.trace("substep.analyze", SignalKind.INTERNAL, substep, parent)) {
             try (var scope = span.makeCurrent()) {
-                observe.log("gen_ai.agent.a2at.agent", LogSeverity.INFO, "Agent started", Map.of(
+                observe.log("agent", LogSeverity.INFO, "Agent started", Map.of(
                     "gen_ai.agent.name", "consumer-agent", "agent.role", "observer",
                     "agent.skills", List.of("analyze", "report"), "agent.state", "running"), span);
-                observe.log("gen_ai.agent.a2at.substep", LogSeverity.INFO, "Agent substep started", Map.of(
+                observe.log("substep", LogSeverity.INFO, "Agent substep started", Map.of(
                     "gen_ai.agent.name", "consumer-agent", "substep.name", "analyze", "substep.status", "running",
                     "workflow.step.name", stepName, "workflow.step.id", "step-1"), span);
                 agentWork.accept(span);
@@ -211,10 +211,10 @@ public final class ConsumerAllSignals {
                 observe.metric("gen_ai.client.inference.usage.output_tokens", 190, Map.of(
                     "gen_ai.operation.name", "chat", "gen_ai.provider.name", "openai", "gen_ai.token.modality", "text",
                     "gen_ai.agent.name", "consumer-agent", "gen_ai.request.model", "model-1"));
-                observe.log("gen_ai.agent.a2at.substep", LogSeverity.INFO, "Agent substep completed", Map.of(
+                observe.log("substep", LogSeverity.INFO, "Agent substep completed", Map.of(
                     "gen_ai.agent.name", "consumer-agent", "substep.name", "analyze", "substep.status", "completed",
                     "workflow.step.name", stepName, "workflow.step.id", "step-1"), span);
-                observe.log("gen_ai.agent.a2at.agent", LogSeverity.INFO, "Agent completed", Map.of(
+                observe.log("agent", LogSeverity.INFO, "Agent completed", Map.of(
                     "gen_ai.agent.name", "consumer-agent", "agent.role", "observer",
                     "agent.skills", List.of("analyze", "report"), "agent.state", "completed"), span);
                 span.ok();

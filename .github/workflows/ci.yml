@@ -57,7 +57,7 @@ jobs:
           grep -F 'sdk-consumer-ci' collector.log
           grep -F 'SendMessage' collector.log
           grep -F 'gen_ai.agent.a2at.task.duration' collector.log
-          grep -F 'gen_ai.agent.a2at.message' collector.log
+          grep -F 'EventName: message' collector.log
 
       - name: Show Collector output on failure
         if: always()

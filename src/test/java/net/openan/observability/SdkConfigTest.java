@@ -120,7 +120,7 @@ class SdkConfigTest {
             .build());
         long start = System.nanoTime();
         var span = sdk.observe().trace("SendMessage", SignalKind.CLIENT, Map.of("extension.name", "task-t", "task.type", "test"));
-        sdk.observe().log("gen_ai.agent.a2at.message", LogSeverity.INFO, "body", Map.of("extension.name", "task-t", "task.type", "test"), span);
+        sdk.observe().log("message", LogSeverity.INFO, "body", Map.of("extension.name", "task-t", "task.type", "test"), span);
         sdk.observe().metric("task.count", 1, Map.of("task.type", "test"));
         span.end();
         assertTrue(Duration.ofNanos(System.nanoTime() - start).toMillis() < 2000);

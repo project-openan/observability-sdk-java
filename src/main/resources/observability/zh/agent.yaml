@@ -58,23 +58,23 @@ metrics:
 
 traces:
   substep:
-    name_prefix: a2at.substep.
+    name_prefix: substep.
     source: openan
-    description: 'Agent 子步骤 Span，名称为前缀 a2at.substep. 加子步骤名'
+    description: 'Agent 子步骤 Span，名称为前缀 gen_ai.agent.a2at.substep. 加子步骤名'
     attributes:
       allowed: [gen_ai.agent.name, substep.name, substep.status]
       required: [gen_ai.agent.name, substep.name, substep.status]
 
 logs:
   agent:
-    name: gen_ai.agent.a2at.agent
+    name: agent
     source: openan
     description: 'Agent 生命周期事件日志'
     attributes:
       allowed: [gen_ai.agent.name, agent.role, agent.skills, agent.state]
       required: [gen_ai.agent.name, agent.state]
   substep:
-    name: gen_ai.agent.a2at.substep
+    name: substep
     source: openan
     description: 'Agent 子步骤事件日志'
     attributes:

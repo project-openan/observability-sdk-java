@@ -100,8 +100,8 @@ class RuntimeConfigurationTest {
 
     private static void record(ObservabilitySdk sdk) {
         var attributes = Map.<String, Object>of("workflow.id", "wf", "workflow.type", "test", "workflow.status", "ok");
-        try (var span = sdk.observe().trace("a2at.workflow", SignalKind.INTERNAL, attributes)) {
-            sdk.observe().log("gen_ai.agent.a2at.workflow", LogSeverity.INFO, "recorded", attributes, span);
+        try (var span = sdk.observe().trace("workflow", SignalKind.INTERNAL, attributes)) {
+            sdk.observe().log("workflow", LogSeverity.INFO, "recorded", attributes, span);
             sdk.observe().metric("workflow.count", 1, Map.of("workflow.type", "test", "workflow.status", "ok"));
             span.ok();
         }

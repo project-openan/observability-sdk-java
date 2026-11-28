@@ -58,23 +58,23 @@ metrics:
 
 traces:
   substep:
-    name_prefix: a2at.substep.
+    name_prefix: substep.
     source: openan
-    description: 'Agent substep span; the name is the prefix a2at.substep. plus the substep name'
+    description: 'Agent substep span; the name is the prefix gen_ai.agent.a2at.substep. plus the substep name'
     attributes:
       allowed: [gen_ai.agent.name, substep.name, substep.status]
       required: [gen_ai.agent.name, substep.name, substep.status]
 
 logs:
   agent:
-    name: gen_ai.agent.a2at.agent
+    name: agent
     source: openan
     description: 'Agent lifecycle event log'
     attributes:
       allowed: [gen_ai.agent.name, agent.role, agent.skills, agent.state]
       required: [gen_ai.agent.name, agent.state]
   substep:
-    name: gen_ai.agent.a2at.substep
+    name: substep
     source: openan
     description: 'Agent substep event log'
     attributes:

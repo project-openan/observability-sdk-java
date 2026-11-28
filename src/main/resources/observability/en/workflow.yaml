@@ -59,30 +59,30 @@ metrics:
 
 traces:
   workflow:
-    name: a2at.workflow
+    name: workflow
     source: openan
     description: 'Root span of one workflow execution, covering the full interval from start to terminal state'
     attributes:
       allowed: [workflow.id, workflow.name, workflow.type, workflow.status, workflow.session_id]
       required: [workflow.id, workflow.type, workflow.status]
   step:
-    name_prefix: a2at.step.
+    name_prefix: step.
     source: openan
-    description: 'Workflow step span; the name is the prefix a2at.step. plus the step name'
+    description: 'Workflow step span; the name is the prefix gen_ai.agent.a2at.step. plus the step name'
     attributes:
       allowed: [workflow.step.name, workflow.step.id, workflow.step.status, workflow.step.owner_agent]
       required: [workflow.step.name, workflow.step.id, workflow.step.status]
 
 logs:
   workflow:
-    name: gen_ai.agent.a2at.workflow
+    name: workflow
     source: openan
     description: 'Workflow event log (start, state change, completion)'
     attributes:
       allowed: [workflow.id, workflow.name, workflow.type, workflow.status, workflow.session_id, business.domain, business.customer]
       required: [workflow.id, workflow.type, workflow.status]
   step:
-    name: gen_ai.agent.a2at.step
+    name: step
     source: openan
     description: 'Workflow step event log'
     attributes:

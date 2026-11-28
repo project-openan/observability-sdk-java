@@ -160,7 +160,7 @@ Map<String, Object> attributes = Map.of(
     "workflow.id", "wf-001",
     "workflow.type", "fault-diagnosis",
     "workflow.status", "running");
-try (var span = observe.trace("a2at.workflow", SignalKind.INTERNAL, attributes)) {
+try (var span = observe.trace("workflow", SignalKind.INTERNAL, attributes)) {
     // 执行业务逻辑
     span.ok();
 }
@@ -201,7 +201,7 @@ void log(String name, LogSeverity severity, String body, Map<String, ?> attribut
 `LogSeverity` 支持 `TRACE`、`DEBUG`、`INFO`、`WARN`、`ERROR`、`FATAL`。
 
 ```java
-observe.log("gen_ai.agent.a2at.agent", LogSeverity.INFO, "agent completed", Map.of(
+observe.log("agent", LogSeverity.INFO, "agent completed", Map.of(
     "gen_ai.agent.name", "diagnosis-agent",
     "agent.state", "completed"), span);
 ```
@@ -220,7 +220,7 @@ observe.log("gen_ai.agent.a2at.agent", LogSeverity.INFO, "agent completed", Map.
 | `close()` / `end()` | 结束 Span，重复调用不会重复结束 |
 
 ```java
-try (var span = observe.trace("a2at.substep.retrieve-alarms", SignalKind.INTERNAL, attributes);
+try (var span = observe.trace("substep.retrieve-alarms", SignalKind.INTERNAL, attributes);
      var scope = span.makeCurrent()) {
     try {
         callTool();
@@ -270,8 +270,8 @@ try (var scope = TraceContextPropagation.extractToCurrent(headers, getter);
 
 | 分类 | Trace | Metric | Log |
 |---|---|---|---|
-| A2A / A2A-T | `SendMessage`、`SendStreamingMessage`、`SendStreamingMessage-event`、`SendStreamingMessage-end`、`GetTask`、`CancelTask`、`ListTasks`、`SubscribeToTask`、推送通知配置操作 | A2A 两项指标、Task-T / Negotiation-T / Notification-T / Authorization-T 八项指标 | `gen_ai.agent.a2at.message` |
-| Workflow | `a2at.workflow`、`a2at.step.<name>` | `workflow.duration`、`workflow.count`、`step.duration`、`step.count` | `gen_ai.agent.a2at.workflow`、`gen_ai.agent.a2at.step` |
-| Agent | `a2at.substep.<name>` | `substep.duration`、`substep.count`、`gen_ai.client.inference.usage.input_tokens` / `output_tokens` | `gen_ai.agent.a2at.agent`、`gen_ai.agent.a2at.substep` |
+| A2A / A2A-T | `SendMessage`、`SendStreamingMessage`、`SendStreamingMessage-event`、`SendStreamingMessage-end`、`GetTask`、`CancelTask`、`ListTasks`、`SubscribeToTask`、推送通知配置操作 | A2A 两项指标、Task-T / Negotiation-T / Notification-T / Authorization-T 八项指标 | `message` |
+| Workflow | `workflow`、`step.<name>` | `workflow.duration`、`workflow.count`、`step.duration`、`step.count` | `workflow`、`step` |
+| Agent | `substep.<name>` | `substep.duration`、`substep.count`、`gen_ai.client.inference.usage.input_tokens` / `output_tokens` | `agent`、`substep` |
 
 详见 [开发指南](开发指南.md) 与 [信号目录](信号目录.md)。

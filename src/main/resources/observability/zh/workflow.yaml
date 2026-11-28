@@ -59,30 +59,30 @@ metrics:
 
 traces:
   workflow:
-    name: a2at.workflow
+    name: workflow
     source: openan
     description: '一次工作流执行的根 Span，覆盖从启动到终态的完整区间'
     attributes:
       allowed: [workflow.id, workflow.name, workflow.type, workflow.status, workflow.session_id]
       required: [workflow.id, workflow.type, workflow.status]
   step:
-    name_prefix: a2at.step.
+    name_prefix: step.
     source: openan
-    description: '工作流步骤 Span，名称为前缀 a2at.step. 加步骤名'
+    description: '工作流步骤 Span，名称为前缀 gen_ai.agent.a2at.step. 加步骤名'
     attributes:
       allowed: [workflow.step.name, workflow.step.id, workflow.step.status, workflow.step.owner_agent]
       required: [workflow.step.name, workflow.step.id, workflow.step.status]
 
 logs:
   workflow:
-    name: gen_ai.agent.a2at.workflow
+    name: workflow
     source: openan
     description: '工作流事件日志（启动、状态变更、完成）'
     attributes:
       allowed: [workflow.id, workflow.name, workflow.type, workflow.status, workflow.session_id, business.domain, business.customer]
       required: [workflow.id, workflow.type, workflow.status]
   step:
-    name: gen_ai.agent.a2at.step
+    name: step
     source: openan
     description: '工作流步骤事件日志'
     attributes:

@@ -48,10 +48,10 @@ class AgentCoverageTest {
             .setMeterProvider(SdkMeterProvider.builder().registerMetricReader(metrics).build()).build()) {
             var observe = new Observability(sdk);
             var substep = Map.of("gen_ai.agent.name", "diagnosis-agent", "substep.name", "retrieve-alarms", "substep.status", "active");
-            var span = observe.trace("a2at.substep.retrieve-alarms", SignalKind.INTERNAL, substep);
-            observe.log("gen_ai.agent.a2at.agent", LogSeverity.INFO, "agent started", Map.of(
+            var span = observe.trace("substep.retrieve-alarms", SignalKind.INTERNAL, substep);
+            observe.log("agent", LogSeverity.INFO, "agent started", Map.of(
                 "gen_ai.agent.name", "diagnosis-agent", "agent.role", "diagnosis", "agent.skills", List.of("retrieve", "reason"), "agent.state", "running"), span);
-            observe.log("gen_ai.agent.a2at.substep", LogSeverity.INFO, "substep started", Map.of(
+            observe.log("substep", LogSeverity.INFO, "substep started", Map.of(
                 "gen_ai.agent.name", "diagnosis-agent", "substep.name", "retrieve-alarms", "substep.status", "active", "workflow.step.name", "diagnosis", "workflow.step.id", "step-1"), span);
             observe.metric("substep.duration", 8, Map.of("substep.status", "success", "gen_ai.agent.name", "diagnosis-agent"));
             observe.metric("substep.count", 1, Map.of("substep.status", "success", "gen_ai.agent.name", "diagnosis-agent"));
@@ -62,7 +62,7 @@ class AgentCoverageTest {
             span.end();
 
             assertEquals(1, spans.getFinishedSpanItems().size());
-            assertEquals("a2at.substep.retrieve-alarms", spans.getFinishedSpanItems().get(0).getName());
+            assertEquals("substep.retrieve-alarms", spans.getFinishedSpanItems().get(0).getName());
             assertEquals(List.of("retrieve", "reason"), logs.getFinishedLogRecordItems().get(0).getAttributes()
                 .get(AttributeKey.stringArrayKey(Definitions.PREFIX + "agent.skills")));
             assertEquals(4, metrics.collectAllMetrics().size());
@@ -79,9 +79,9 @@ class AgentCoverageTest {
             .setLoggerProvider(SdkLoggerProvider.builder().addLogRecordProcessor(SimpleLogRecordProcessor.create(logs)).build())
             .setMeterProvider(SdkMeterProvider.builder().registerMetricReader(metrics).build()).build()) {
             var observe = new Observability(sdk);
-            observe.trace("a2at.substep.work", SignalKind.INTERNAL, Map.of("gen_ai.agent.name", "a", "substep.name", "work", "substep.status", "custom", "workflow.id", "wf-1")).end();
+            observe.trace("substep.work", SignalKind.INTERNAL, Map.of("gen_ai.agent.name", "a", "substep.name", "work", "substep.status", "custom", "workflow.id", "wf-1")).end();
             observe.metric("gen_ai.client.inference.usage.input_tokens", 1, Map.of("gen_ai.operation.name", "chat", "gen_ai.provider.name", "openai", "gen_ai.token.modality", 1));
-            observe.log("gen_ai.agent.a2at.agent", LogSeverity.INFO, "invalid", Map.of("gen_ai.agent.name", "a", "agent.state", "running", "workflow.id", "wf-1"));
+            observe.log("agent", LogSeverity.INFO, "invalid", Map.of("gen_ai.agent.name", "a", "agent.state", "running", "workflow.id", "wf-1"));
             assertTrue(spans.getFinishedSpanItems().isEmpty());
             assertTrue(metrics.collectAllMetrics().isEmpty());
             assertTrue(logs.getFinishedLogRecordItems().isEmpty());

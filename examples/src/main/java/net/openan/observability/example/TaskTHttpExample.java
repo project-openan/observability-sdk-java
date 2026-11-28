@@ -97,7 +97,7 @@ public final class TaskTHttpExample {
             exchange.getResponseHeaders().set("Content-Type", "application/json");
             exchange.sendResponseHeaders(200, response.length);
             exchange.getResponseBody().write(response);
-            observe.log("gen_ai.agent.a2at.message", LogSeverity.INFO, "Task-T completed " + runId,
+            observe.log("message", LogSeverity.INFO, "Task-T completed " + runId,
                 Map.of("extension.name", "task-t", "task.type", "diagnosis"), span);
             span.ok();
         }

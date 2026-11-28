@@ -59,7 +59,7 @@ Task-T spans, logs, `task.duration`, and `task.count` all require a non-blank `t
 ```java
 var task = Map.of("extension.name", "task-t", "task.type", "diagnosis");
 try (var span = observe.trace("SendMessage", SignalKind.CLIENT, task)) {
-    observe.log("gen_ai.agent.a2at.message", LogSeverity.INFO,
+    observe.log("message", LogSeverity.INFO,
         "diagnosis completed", task, span);
     observe.metric("task.duration", 42_000, Map.of("task.type", "diagnosis"));
     observe.metric("task.count", 1, Map.of("task.type", "diagnosis"));
@@ -69,20 +69,20 @@ try (var span = observe.trace("SendMessage", SignalKind.CLIENT, task)) {
 
 ### 3.2 Workflow
 
-The workflow trace name is `a2at.workflow` and requires `workflow.id`, `workflow.type`, and `workflow.status`. A step trace uses `a2at.step.<step-name>` and requires the step name, ID, and status.
+The workflow trace name is `workflow` and requires `workflow.id`, `workflow.type`, and `workflow.status`. A step trace uses `gen_ai.agent.a2at.step.<step-name>` and requires the step name, ID, and status.
 
 ```java
 var workflow = Map.of(
     "workflow.id", "wf-001",
     "workflow.type", "fault-diagnosis",
     "workflow.status", "running");
-try (var workflowSpan = observe.trace("a2at.workflow", SignalKind.INTERNAL, workflow);
+try (var workflowSpan = observe.trace("workflow", SignalKind.INTERNAL, workflow);
      var workflowScope = workflowSpan.makeCurrent()) {
     var step = Map.of(
         "workflow.step.name", "retrieve-alarms",
         "workflow.step.id", "step-1",
         "workflow.step.status", "completed");
-    try (var stepSpan = observe.trace("a2at.step.retrieve-alarms", SignalKind.INTERNAL, step)) {
+    try (var stepSpan = observe.trace("step.retrieve-alarms", SignalKind.INTERNAL, step)) {
         observe.metric("step.duration", 75, Map.of(
             "workflow.step.status", "success",
             "gen_ai.agent.name", "diagnosis-agent"));
@@ -98,14 +98,14 @@ try (var workflowSpan = observe.trace("a2at.workflow", SignalKind.INTERNAL, work
 
 ### 3.3 Agent
 
-An agent substep trace uses `a2at.substep.<substep-name>` and requires the agent name, substep name, and substep status. `agent.skills` is a list of strings.
+An agent substep trace uses `substep.<substep-name>` and requires the agent name, substep name, and substep status. `agent.skills` is a list of strings.
 
 ```java
 var substep = Map.of(
     "gen_ai.agent.name", "diagnosis-agent",
     "substep.name", "retrieve-alarms",
     "substep.status", "completed");
-try (var span = observe.trace("a2at.substep.retrieve-alarms", SignalKind.INTERNAL, substep)) {
+try (var span = observe.trace("substep.retrieve-alarms", SignalKind.INTERNAL, substep)) {
     observe.metric("substep.duration", 50, Map.of(
         "substep.status", "success", "gen_ai.agent.name", "diagnosis-agent"));
     observe.metric("gen_ai.client.inference.usage.input_tokens", 120, Map.of(
@@ -114,7 +114,7 @@ try (var span = observe.trace("a2at.substep.retrieve-alarms", SignalKind.INTERNA
         "gen_ai.token.modality", "text",
         "gen_ai.agent.name", "diagnosis-agent",
         "gen_ai.request.model", "model-1"));
-    observe.log("gen_ai.agent.a2at.agent", LogSeverity.INFO, "agent completed", Map.of(
+    observe.log("agent", LogSeverity.INFO, "agent completed", Map.of(
         "gen_ai.agent.name", "diagnosis-agent",
         "agent.skills", List.of("alarm-search"),
         "agent.state", "completed"), span);

@@ -47,7 +47,7 @@ public final class ExtensionsExample {
                 o.metric("authorization.execute.count", 1, Map.of("authorization.policy.operation.type", "create", "authorization.result", "allowed"), span);
             });
             o.trace("SendMessage", SignalKind.CLIENT, Map.of("extension.name", "unknown-extension", "task.type", "invalid-marker")).end();
-            o.log("gen_ai.agent.a2at.message", LogSeverity.INFO, "invalid-marker", Map.of("extension.name", "notification-t", "negotiation.id", "invalid-marker"));
+            o.log("message", LogSeverity.INFO, "invalid-marker", Map.of("extension.name", "notification-t", "negotiation.id", "invalid-marker"));
             o.trace("SendMessage", SignalKind.CLIENT, Map.of("extension.name", "negotiation-t", "negotiation.max_rounds", 999)).end();
             o.metric("task.count", 999, Map.of("task.type", "diagnosis", "notification.topic", "invalid-marker"));
             if (!sdk.flush(10, TimeUnit.SECONDS)) throw new IllegalStateException("Flush failed or timed out");
@@ -57,7 +57,7 @@ public final class ExtensionsExample {
         var logAttrs = new java.util.HashMap<>(attrs); logAttrs.putAll(extra);
         try (var span = o.trace("SendMessage", SignalKind.CLIENT, attrs)) {
             String body = "extension sample " + attrs.get("extension.name");
-            o.log("gen_ai.agent.a2at.message", LogSeverity.INFO, body, logAttrs, span);
+            o.log("message", LogSeverity.INFO, body, logAttrs, span);
             metrics.accept(span);
             span.ok();
         }

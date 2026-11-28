@@ -83,7 +83,7 @@ public final class Application {
             "openan-observability",
             sdk.observe(),
             "A2A_OBSERVABILITY",
-            "gen_ai.agent.a2at.agent");
+            "agent");
         appender.start();
         rootLogger.addAppender(appender, null, null);
         context.updateLoggers();
@@ -121,7 +121,7 @@ try {
 }
 ```
 
-The event is sent as the SDK log signal `gen_ai.agent.a2at.agent` with severity `INFO`, body `alarm retrieval started`, and the MDC values as attributes. The same event still reaches other Log4j2 appenders configured by the application.
+The event is sent as the SDK log signal `agent` with severity `INFO`, body `alarm retrieval started`, and the MDC values as attributes. The same event still reaches other Log4j2 appenders configured by the application.
 
 An event without `A2A_OBSERVABILITY` is ignored by this bridge:
 
@@ -137,11 +137,11 @@ Marker inheritance is supported. For example, a Marker that has `A2A_OBSERVABILI
 
 | `eventName` | Required MDC attributes | Optional MDC attributes |
 |---|---|---|
-| `gen_ai.agent.a2at.agent` | `gen_ai.agent.name`, `agent.state` | `agent.role` |
-| `gen_ai.agent.a2at.substep` | `gen_ai.agent.name`, `substep.name`, `substep.status` | `workflow.step.name`, `workflow.step.id` |
-| `gen_ai.agent.a2at.workflow` | `workflow.id`, `workflow.type`, `workflow.status` | `workflow.session_id`, `business.domain`, `business.customer` |
-| `gen_ai.agent.a2at.step` | `workflow.step.name`, `workflow.step.id`, `workflow.step.status` | `workflow.step.owner_agent` |
-| `gen_ai.agent.a2at.message` | `extension.name`; Task-T also requires `task.type` | Attributes permitted by the selected A2A-T extension |
+| `agent` | `gen_ai.agent.name`, `agent.state` | `agent.role` |
+| `substep` | `gen_ai.agent.name`, `substep.name`, `substep.status` | `workflow.step.name`, `workflow.step.id` |
+| `workflow` | `workflow.id`, `workflow.type`, `workflow.status` | `workflow.session_id`, `business.domain`, `business.customer` |
+| `step` | `workflow.step.name`, `workflow.step.id`, `workflow.step.status` | `workflow.step.owner_agent` |
+| `message` | `extension.name`; Task-T also requires `task.type` | Attributes permitted by the selected A2A-T extension |
 
 For the message signal, `extension.name` must be one of `task-t`, `negotiation-t`, `notification-t`, or `authorization-t`. The selected value determines the allowed MDC attribute names. See [`a2at.yaml`](../src/main/resources/observability/en/a2at.yaml) for the complete list and [`agent.yaml`](../src/main/resources/observability/en/agent.yaml) and [`workflow.yaml`](../src/main/resources/observability/en/workflow.yaml) for Agent and Workflow definitions.
 
