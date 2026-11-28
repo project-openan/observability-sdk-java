@@ -261,7 +261,7 @@ The complete allowlists, required attributes, types, and metric dimensions are d
 | Category | Traces | Metrics | Logs |
 |---|---|---|---|
 | A2A / A2A-T | `SendMessage`, `SendStreamingMessage`, `SendStreamingMessage-event`, `SendStreamingMessage-end`, `GetTask`, `CancelTask`, `ListTasks`, `SubscribeToTask`, push-notification config operations | Two A2A metrics and eight Task-T / Negotiation-T / Notification-T / Authorization-T metrics | `gen_ai.agent.a2at.message` |
-| Workflow | `a2at.workflow`, `a2at.step.<name>` | `workflow.duration`, `workflow.count`, `step.duration` | `gen_ai.agent.a2at.workflow`, `gen_ai.agent.a2at.step` |
-| Agent | `a2at.substep.<name>` | `substep.duration`, `gen_ai.client.token.usage` | `gen_ai.agent.a2at.agent`, `gen_ai.agent.a2at.substep` |
+| Workflow | `a2at.workflow`, `a2at.step.<name>` | `workflow.duration`, `workflow.count`, `step.duration`, `step.count` | `gen_ai.agent.a2at.workflow`, `gen_ai.agent.a2at.step` |
+| Agent | `a2at.substep.<name>` | `substep.duration`, `substep.count`, `gen_ai.client.inference.usage.input_tokens` / `output_tokens` | `gen_ai.agent.a2at.agent`, `gen_ai.agent.a2at.substep` |
 
 See the [Development Guide](development-guide.md) for signal rules and YAML maintenance.

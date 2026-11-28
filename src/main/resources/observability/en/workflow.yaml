@@ -1,0 +1,92 @@
+version: 1.0.0
+signal: workflow
+description: 'Workflow orchestration signals: Trace, Metric, and Log coverage at the workflow-instance and step levels'
+
+attributes:
+  workflow.id: {otel_name: gen_ai.agent.a2at.workflow.id, type: string, source: openan, value_range: 'Free string, instance-unique identifier (high cardinality)', description: 'Workflow instance unique identifier, used to correlate one execution across signals'}
+  workflow.name: {otel_name: gen_ai.agent.a2at.workflow.name, type: string, source: openan, value_range: 'Free string, low cardinality recommended', description: 'Workflow name, low cardinality recommended'}
+  workflow.type: {otel_name: gen_ai.agent.a2at.workflow.type, type: string, source: openan, value_range: 'Low-cardinality type enum (e.g. fault-diagnosis)', description: 'Workflow type, low-cardinality type enum (e.g. fault-diagnosis)'}
+  workflow.status: {otel_name: gen_ai.agent.a2at.workflow.status, type: string, source: openan, value_range: 'Runtime state (running/completed/failed/cancelled, etc.)', description: 'Workflow execution state, runtime state (running/completed/failed, etc.)'}
+  workflow.session_id: {otel_name: gen_ai.agent.a2at.workflow.session_id, type: string, source: openan, value_range: 'Free string', description: 'Session identifier the workflow belongs to'}
+  workflow.step.name: {otel_name: gen_ai.agent.a2at.workflow.step.name, type: string, source: openan, value_range: 'Free string, step name (high cardinality)', description: 'Workflow step name'}
+  workflow.step.id: {otel_name: gen_ai.agent.a2at.workflow.step.id, type: string, source: openan, value_range: 'Free string, step identifier', description: 'Step identifier'}
+  workflow.step.status: {otel_name: gen_ai.agent.a2at.workflow.step.status, type: string, source: openan, value_range: 'Metric dimension convention success/failed; Trace/Log runtime state (active/running/completed)', description: 'Step execution state; metric dimensions use the terminal states success/failed, Trace/Log use runtime states (active/running/completed)'}
+  workflow.step.owner_agent: {otel_name: gen_ai.agent.a2at.workflow.step.owner_agent, type: string, source: openan, value_range: 'Agent name', description: 'Name of the agent responsible for the step'}
+  gen_ai.agent.name: {otel_name: gen_ai.agent.name, type: string, source: gen_ai, value_range: 'Free string, agent name (low cardinality)', description: 'Agent name, OTel GenAI standard attribute, low cardinality recommended'}
+  business.domain: {otel_name: gen_ai.agent.a2at.business.domain, type: string, source: openan, value_range: 'Low cardinality (e.g. transport)', description: 'Business domain, low cardinality (e.g. transport)'}
+  business.customer: {otel_name: gen_ai.agent.a2at.business.customer, type: string, source: openan, value_range: 'Free string', description: 'Customer identifier'}
+metrics:
+  workflow.duration:
+    otel_name: gen_ai.agent.a2at.workflow.duration
+    source: openan
+    description: 'End-to-end duration distribution of a single workflow run, from start to terminal state'
+    type: histogram
+    value_type: number
+    unit: ms
+    attributes:
+      allowed: [workflow.type, workflow.status]
+      required: [workflow.type, workflow.status]
+  workflow.count:
+    otel_name: gen_ai.agent.a2at.workflow.count
+    source: openan
+    description: 'Cumulative workflow execution count; success/failure counts can be aggregated by state'
+    type: counter
+    value_type: integer
+    unit: ''
+    attributes:
+      allowed: [workflow.type, workflow.status]
+      required: [workflow.type, workflow.status]
+  step.duration:
+    otel_name: gen_ai.agent.a2at.step.duration
+    source: openan
+    description: 'Workflow step duration distribution (dimensions: step terminal state × agent)'
+    type: histogram
+    value_type: number
+    unit: ms
+    attributes:
+      allowed: [workflow.step.status, gen_ai.agent.name]
+      required: [workflow.step.status, gen_ai.agent.name]
+  step.count:
+    otel_name: gen_ai.agent.a2at.step.count
+    source: openan
+    description: 'Cumulative workflow step execution count; step failure rate can be derived'
+    type: counter
+    value_type: integer
+    unit: ''
+    attributes:
+      allowed: [workflow.step.status, gen_ai.agent.name]
+      required: [workflow.step.status, gen_ai.agent.name]
+
+traces:
+  workflow:
+    name: a2at.workflow
+    source: openan
+    description: 'Root span of one workflow execution, covering the full interval from start to terminal state'
+    attributes:
+      allowed: [workflow.id, workflow.name, workflow.type, workflow.status, workflow.session_id]
+      required: [workflow.id, workflow.type, workflow.status]
+  step:
+    name_prefix: a2at.step.
+    source: openan
+    description: 'Workflow step span; the name is the prefix a2at.step. plus the step name'
+    attributes:
+      allowed: [workflow.step.name, workflow.step.id, workflow.step.status, workflow.step.owner_agent]
+      required: [workflow.step.name, workflow.step.id, workflow.step.status]
+
+logs:
+  workflow:
+    name: gen_ai.agent.a2at.workflow
+    source: openan
+    description: 'Workflow event log (start, state change, completion)'
+    attributes:
+      allowed: [workflow.id, workflow.name, workflow.type, workflow.status, workflow.session_id, business.domain, business.customer]
+      required: [workflow.id, workflow.type, workflow.status]
+  step:
+    name: gen_ai.agent.a2at.step
+    source: openan
+    description: 'Workflow step event log'
+    attributes:
+      allowed: [workflow.step.name, workflow.step.id, workflow.step.status, workflow.step.owner_agent]
+      required: [workflow.step.name, workflow.step.id, workflow.step.status]
+
+extensions: {}

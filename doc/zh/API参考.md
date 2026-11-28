@@ -271,7 +271,7 @@ try (var scope = TraceContextPropagation.extractToCurrent(headers, getter);
 | 分类 | Trace | Metric | Log |
 |---|---|---|---|
 | A2A / A2A-T | `SendMessage`、`SendStreamingMessage`、`SendStreamingMessage-event`、`SendStreamingMessage-end`、`GetTask`、`CancelTask`、`ListTasks`、`SubscribeToTask`、推送通知配置操作 | A2A 两项指标、Task-T / Negotiation-T / Notification-T / Authorization-T 八项指标 | `gen_ai.agent.a2at.message` |
-| Workflow | `a2at.workflow`、`a2at.step.<name>` | `workflow.duration`、`workflow.count`、`step.duration` | `gen_ai.agent.a2at.workflow`、`gen_ai.agent.a2at.step` |
-| Agent | `a2at.substep.<name>` | `substep.duration`、`gen_ai.client.token.usage` | `gen_ai.agent.a2at.agent`、`gen_ai.agent.a2at.substep` |
+| Workflow | `a2at.workflow`、`a2at.step.<name>` | `workflow.duration`、`workflow.count`、`step.duration`、`step.count` | `gen_ai.agent.a2at.workflow`、`gen_ai.agent.a2at.step` |
+| Agent | `a2at.substep.<name>` | `substep.duration`、`substep.count`、`gen_ai.client.inference.usage.input_tokens` / `output_tokens` | `gen_ai.agent.a2at.agent`、`gen_ai.agent.a2at.substep` |
 
-详见 [开发指南](开发指南.md) 中的属性和 YAML 定义说明。
+详见 [开发指南](开发指南.md) 与 [信号目录](信号目录.md)。

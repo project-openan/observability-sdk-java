@@ -69,7 +69,7 @@ try (var span = observe.trace("SendMessage", SignalKind.CLIENT, task)) {
 
 ### 3.2 Workflow
 
-The workflow trace name is `a2at.workflow` and requires `workflow.id`, `workflow.type`, and `workflow.status`. A step trace uses `a2at.step.<step-name>` and requires the step name, index, and status.
+The workflow trace name is `a2at.workflow` and requires `workflow.id`, `workflow.type`, and `workflow.status`. A step trace uses `a2at.step.<step-name>` and requires the step name, ID, and status.
 
 ```java
 var workflow = Map.of(
@@ -79,12 +79,12 @@ var workflow = Map.of(
 try (var workflowSpan = observe.trace("a2at.workflow", SignalKind.INTERNAL, workflow);
      var workflowScope = workflowSpan.makeCurrent()) {
     var step = Map.of(
-        "workflow.step", "retrieve-alarms",
-        "workflow.step.index", 1,
+        "workflow.step.name", "retrieve-alarms",
+        "workflow.step.id", "step-1",
         "workflow.step.status", "completed");
     try (var stepSpan = observe.trace("a2at.step.retrieve-alarms", SignalKind.INTERNAL, step)) {
         observe.metric("step.duration", 75, Map.of(
-            "workflow.step", "retrieve-alarms",
+            "workflow.step.status", "success",
             "gen_ai.agent.name", "diagnosis-agent"));
         stepSpan.ok();
     }
@@ -94,7 +94,7 @@ try (var workflowSpan = observe.trace("a2at.workflow", SignalKind.INTERNAL, work
 }
 ```
 
-`workflow.duration` and `workflow.count` require `workflow.type` and `workflow.status`; `step.duration` requires `workflow.step` and `gen_ai.agent.name`.
+`workflow.duration` and `workflow.count` require `workflow.type` and `workflow.status`; `step.duration` and `step.count` require the step outcome `workflow.step.status` (convention `success` / `failed`) and `gen_ai.agent.name`—metrics use the terminal state while traces use the running state.
 
 ### 3.3 Agent
 
@@ -107,11 +107,13 @@ var substep = Map.of(
     "substep.status", "completed");
 try (var span = observe.trace("a2at.substep.retrieve-alarms", SignalKind.INTERNAL, substep)) {
     observe.metric("substep.duration", 50, Map.of(
-        "gen_ai.agent.name", "diagnosis-agent", "substep.name", "retrieve-alarms"));
-    observe.metric("gen_ai.client.token.usage", 120, Map.of(
+        "substep.status", "success", "gen_ai.agent.name", "diagnosis-agent"));
+    observe.metric("gen_ai.client.inference.usage.input_tokens", 120, Map.of(
+        "gen_ai.operation.name", "chat",
+        "gen_ai.provider.name", "openai",
+        "gen_ai.token.modality", "text",
         "gen_ai.agent.name", "diagnosis-agent",
-        "gen_ai.request.model", "model-1",
-        "gen_ai.token.type", "input"));
+        "gen_ai.request.model", "model-1"));
     observe.log("gen_ai.agent.a2at.agent", LogSeverity.INFO, "agent completed", Map.of(
         "gen_ai.agent.name", "diagnosis-agent",
         "agent.skills", List.of("alarm-search"),
@@ -165,13 +167,13 @@ See the [API Reference](api-reference.md#sdkconfig-and-sdkconfigbuilder) for end
 
 ## 6. Signal definitions and validation
 
-Three definitions are packaged in the JAR:
+Three definitions are packaged in the JAR under `observability/zh/` and loaded by the SDK; English reference copies of the same definitions live under `observability/en/`:
 
 | File | Coverage |
 |---|---|
-| `src/main/resources/observability/a2at.yaml` | A2A and four A2A-T extensions |
-| `src/main/resources/observability/workflow.yaml` | Workflow and step |
-| `src/main/resources/observability/agent.yaml` | Agent, substep, and token usage |
+| `src/main/resources/observability/zh/a2at.yaml` | A2A and four A2A-T extensions |
+| `src/main/resources/observability/zh/workflow.yaml` | Workflow and step |
+| `src/main/resources/observability/zh/agent.yaml` | Agent, substep, and token usage |
 
 Each YAML file declares its `version`, attribute types and OpenTelemetry names, trace/log allowlists and required attributes, and metric types and dimensions. At runtime, the SDK:
 

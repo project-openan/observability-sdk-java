@@ -1,0 +1,92 @@
+version: 1.0.0
+signal: workflow
+description: '工作流编排信号：覆盖工作流实例与步骤两级的 Trace、Metric、Log'
+
+attributes:
+  workflow.id: {otel_name: gen_ai.agent.a2at.workflow.id, type: string, source: openan, value_range: '自由字符串，实例唯一标识（高基数）', description: '工作流实例唯一标识，用于跨信号关联同一次执行'}
+  workflow.name: {otel_name: gen_ai.agent.a2at.workflow.name, type: string, source: openan, value_range: '自由字符串，建议低基数', description: '工作流名称，建议低基数'}
+  workflow.type: {otel_name: gen_ai.agent.a2at.workflow.type, type: string, source: openan, value_range: '低基数类型枚举（如 fault-diagnosis）', description: '工作流类型，低基数类型枚举（如 fault-diagnosis）'}
+  workflow.status: {otel_name: gen_ai.agent.a2at.workflow.status, type: string, source: openan, value_range: '运行态（running/completed/failed/cancelled 等）', description: '工作流执行状态，运行态（running/completed/failed 等）'}
+  workflow.session_id: {otel_name: gen_ai.agent.a2at.workflow.session_id, type: string, source: openan, value_range: '自由字符串', description: '工作流所属会话标识'}
+  workflow.step.name: {otel_name: gen_ai.agent.a2at.workflow.step.name, type: string, source: openan, value_range: '自由字符串，步骤名（高基数）', description: '工作流步骤名称'}
+  workflow.step.id: {otel_name: gen_ai.agent.a2at.workflow.step.id, type: string, source: openan, value_range: '自由字符串，步骤标识', description: '步骤标识'}
+  workflow.step.status: {otel_name: gen_ai.agent.a2at.workflow.step.status, type: string, source: openan, value_range: 'Metric 维度约定 success/failed；Trace/Log 运行态（active/running/completed）', description: '步骤执行状态；Metric 维度约定取终态 success/failed，Trace/Log 为运行态（active/running/completed）'}
+  workflow.step.owner_agent: {otel_name: gen_ai.agent.a2at.workflow.step.owner_agent, type: string, source: openan, value_range: 'Agent 名称', description: '负责执行该步骤的 Agent 名称'}
+  gen_ai.agent.name: {otel_name: gen_ai.agent.name, type: string, source: gen_ai, value_range: '自由字符串，Agent 名（低基数）', description: 'Agent 名称，OTel GenAI 标准属性，建议低基数'}
+  business.domain: {otel_name: gen_ai.agent.a2at.business.domain, type: string, source: openan, value_range: '低基数（如 transport）', description: '业务域，低基数（如 transport）'}
+  business.customer: {otel_name: gen_ai.agent.a2at.business.customer, type: string, source: openan, value_range: '自由字符串', description: '客户标识'}
+metrics:
+  workflow.duration:
+    otel_name: gen_ai.agent.a2at.workflow.duration
+    source: openan
+    description: '单次工作流从启动到终态的端到端耗时分布'
+    type: histogram
+    value_type: number
+    unit: ms
+    attributes:
+      allowed: [workflow.type, workflow.status]
+      required: [workflow.type, workflow.status]
+  workflow.count:
+    otel_name: gen_ai.agent.a2at.workflow.count
+    source: openan
+    description: '工作流执行次数累计，可按状态聚合成功/失败次数'
+    type: counter
+    value_type: integer
+    unit: ''
+    attributes:
+      allowed: [workflow.type, workflow.status]
+      required: [workflow.type, workflow.status]
+  step.duration:
+    otel_name: gen_ai.agent.a2at.step.duration
+    source: openan
+    description: '工作流步骤执行耗时分布（维度：步骤终态 × Agent）'
+    type: histogram
+    value_type: number
+    unit: ms
+    attributes:
+      allowed: [workflow.step.status, gen_ai.agent.name]
+      required: [workflow.step.status, gen_ai.agent.name]
+  step.count:
+    otel_name: gen_ai.agent.a2at.step.count
+    source: openan
+    description: '工作流步骤执行次数累计，可计算步骤失败率'
+    type: counter
+    value_type: integer
+    unit: ''
+    attributes:
+      allowed: [workflow.step.status, gen_ai.agent.name]
+      required: [workflow.step.status, gen_ai.agent.name]
+
+traces:
+  workflow:
+    name: a2at.workflow
+    source: openan
+    description: '一次工作流执行的根 Span，覆盖从启动到终态的完整区间'
+    attributes:
+      allowed: [workflow.id, workflow.name, workflow.type, workflow.status, workflow.session_id]
+      required: [workflow.id, workflow.type, workflow.status]
+  step:
+    name_prefix: a2at.step.
+    source: openan
+    description: '工作流步骤 Span，名称为前缀 a2at.step. 加步骤名'
+    attributes:
+      allowed: [workflow.step.name, workflow.step.id, workflow.step.status, workflow.step.owner_agent]
+      required: [workflow.step.name, workflow.step.id, workflow.step.status]
+
+logs:
+  workflow:
+    name: gen_ai.agent.a2at.workflow
+    source: openan
+    description: '工作流事件日志（启动、状态变更、完成）'
+    attributes:
+      allowed: [workflow.id, workflow.name, workflow.type, workflow.status, workflow.session_id, business.domain, business.customer]
+      required: [workflow.id, workflow.type, workflow.status]
+  step:
+    name: gen_ai.agent.a2at.step
+    source: openan
+    description: '工作流步骤事件日志'
+    attributes:
+      allowed: [workflow.step.name, workflow.step.id, workflow.step.status, workflow.step.owner_agent]
+      required: [workflow.step.name, workflow.step.id, workflow.step.status]
+
+extensions: {}

@@ -110,15 +110,18 @@ class ExtensionCoverageTest {
         try (var sdk = OpenTelemetrySdk.builder().setMeterProvider(SdkMeterProvider.builder().registerMetricReader(reader).build()).build()) {
             var o = new Observability(sdk);
             Map<String, Map<String, Object>> inputs = Map.of(
-                "task.duration", Map.of("task.type", "t"), "task.count", Map.of("task.type", "t"),
+                "task.duration", Map.of("task.type", "t", "task.status", "completed"),
+                "task.count", Map.of("task.type", "t", "task.status", "failed"),
                 "negotiation.rounds", Map.of("negotiation.id", "n", "negotiation.result", "accept"),
-                "negotiation.count", Map.of("negotiation.result", "accept"), "notification.count", Map.of("notification.topic", "t"),
-                "authorization.preauthorize.count", Map.of("authorization.policy.operation.type", "create"),
-                "authorization.preauthorize.duration", Map.of("authorization.policy.operation.type", "create"),
-                "authorization.execute.count", Map.of("authorization.policy.operation.type", "create"));
+                "negotiation.count", Map.of("negotiation.result", "accept"),
+                "notification.count", Map.of("notification.topic", "t", "notification.result", "sent"),
+                "authorization.preauthorize.count", Map.of("authorization.policy.operation.type", "create", "authorization.result", "allowed"),
+                "authorization.preauthorize.duration", Map.of("authorization.policy.operation.type", "create", "authorization.result", "denied"),
+                "authorization.execute.count", Map.of("authorization.policy.operation.type", "create", "authorization.result", "allowed"));
             inputs.forEach((id, attrs) -> o.metric(id, 2, attrs));
             o.metric("task.duration", new BigDecimal("-1e-400"), Map.of("task.type", "t"));
             o.metric("negotiation.count", 999, Map.of("negotiation.round", 1));
+            o.metric("task.count", 999, Map.of("task.type", "x", "notification.result", "sent"));
             var data = reader.collectAllMetrics(); assertEquals(8, data.size());
             for (var metric : data) {
                 String id = metric.getName().substring(P.length());

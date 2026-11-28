@@ -52,17 +52,21 @@ class AgentCoverageTest {
             observe.log("gen_ai.agent.a2at.agent", LogSeverity.INFO, "agent started", Map.of(
                 "gen_ai.agent.name", "diagnosis-agent", "agent.role", "diagnosis", "agent.skills", List.of("retrieve", "reason"), "agent.state", "running"), span);
             observe.log("gen_ai.agent.a2at.substep", LogSeverity.INFO, "substep started", Map.of(
-                "gen_ai.agent.name", "diagnosis-agent", "substep.name", "retrieve-alarms", "substep.status", "active", "workflow.step", "diagnosis", "workflow.step.index", 1), span);
-            observe.metric("substep.duration", 8, Map.of("gen_ai.agent.name", "diagnosis-agent", "substep.name", "retrieve-alarms"));
-            observe.metric("gen_ai.client.token.usage", 120, Map.of("gen_ai.agent.name", "diagnosis-agent", "gen_ai.request.model", "model-1", "gen_ai.token.type", "input"));
+                "gen_ai.agent.name", "diagnosis-agent", "substep.name", "retrieve-alarms", "substep.status", "active", "workflow.step.name", "diagnosis", "workflow.step.id", "step-1"), span);
+            observe.metric("substep.duration", 8, Map.of("substep.status", "success", "gen_ai.agent.name", "diagnosis-agent"));
+            observe.metric("substep.count", 1, Map.of("substep.status", "success", "gen_ai.agent.name", "diagnosis-agent"));
+            observe.metric("gen_ai.client.inference.usage.input_tokens", 120, Map.of("gen_ai.operation.name", "chat", "gen_ai.provider.name", "openai",
+                "gen_ai.token.modality", "text", "gen_ai.agent.name", "diagnosis-agent", "gen_ai.request.model", "model-1"));
+            observe.metric("gen_ai.client.inference.usage.output_tokens", 30, Map.of("gen_ai.operation.name", "chat", "gen_ai.provider.name", "openai",
+                "gen_ai.token.modality", "text", "gen_ai.agent.name", "diagnosis-agent", "gen_ai.request.model", "model-1"));
             span.end();
 
             assertEquals(1, spans.getFinishedSpanItems().size());
             assertEquals("a2at.substep.retrieve-alarms", spans.getFinishedSpanItems().get(0).getName());
             assertEquals(List.of("retrieve", "reason"), logs.getFinishedLogRecordItems().get(0).getAttributes()
                 .get(AttributeKey.stringArrayKey(Definitions.PREFIX + "agent.skills")));
-            assertEquals(2, metrics.collectAllMetrics().size());
-            assertTrue(metrics.collectAllMetrics().stream().anyMatch(metric -> metric.getName().equals("gen_ai.client.token.usage")));
+            assertEquals(4, metrics.collectAllMetrics().size());
+            assertTrue(metrics.collectAllMetrics().stream().anyMatch(metric -> metric.getName().equals("gen_ai.client.inference.usage.input_tokens")));
         }
     }
 
@@ -76,7 +80,7 @@ class AgentCoverageTest {
             .setMeterProvider(SdkMeterProvider.builder().registerMetricReader(metrics).build()).build()) {
             var observe = new Observability(sdk);
             observe.trace("a2at.substep.work", SignalKind.INTERNAL, Map.of("gen_ai.agent.name", "a", "substep.name", "work", "substep.status", "custom", "workflow.id", "wf-1")).end();
-            observe.metric("gen_ai.client.token.usage", 1, Map.of("gen_ai.agent.name", "a", "gen_ai.request.model", "m", "gen_ai.token.type", 1));
+            observe.metric("gen_ai.client.inference.usage.input_tokens", 1, Map.of("gen_ai.operation.name", "chat", "gen_ai.provider.name", "openai", "gen_ai.token.modality", 1));
             observe.log("gen_ai.agent.a2at.agent", LogSeverity.INFO, "invalid", Map.of("gen_ai.agent.name", "a", "agent.state", "running", "workflow.id", "wf-1"));
             assertTrue(spans.getFinishedSpanItems().isEmpty());
             assertTrue(metrics.collectAllMetrics().isEmpty());

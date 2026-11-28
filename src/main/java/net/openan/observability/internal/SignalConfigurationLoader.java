@@ -30,7 +30,7 @@ import org.yaml.snakeyaml.constructor.SafeConstructor;
 
 /** Loads the versioned, bundled signal configuration. */
 final class SignalConfigurationLoader {
-    private static final List<String> RESOURCES = List.of("observability/a2at.yaml", "observability/agent.yaml", "observability/workflow.yaml");
+    private static final List<String> RESOURCES = List.of("observability/zh/a2at.yaml", "observability/zh/agent.yaml", "observability/zh/workflow.yaml");
 
     static Catalog load() {
         Map<String, Definitions.Metric> metrics = new LinkedHashMap<>();
@@ -41,18 +41,24 @@ final class SignalConfigurationLoader {
         Map<String, Definitions.Attribute> attributes = new LinkedHashMap<>();
         Map<String, String> versions = new LinkedHashMap<>();
         A2aProtocol a2a = null;
+        String messageLog = null;
         for (String resource : RESOURCES) {
-            A2aProtocol loaded = load(resource, metrics, spans, logs, traces, namedLogs, attributes, versions);
-            if (loaded != null) {
+            Loaded loaded = load(resource, metrics, spans, logs, traces, namedLogs, attributes, versions);
+            if (loaded.a2a() != null) {
                 if (a2a != null) throw new IllegalStateException("Duplicate A2A protocol configuration");
-                a2a = loaded;
+                a2a = loaded.a2a();
+            }
+            if (loaded.messageLog() != null) {
+                if (messageLog != null) throw new IllegalStateException("Duplicate message log configuration");
+                messageLog = loaded.messageLog();
             }
         }
         if (a2a == null) throw new IllegalStateException("Missing A2A protocol configuration");
-        return new Catalog(Map.copyOf(metrics), Map.copyOf(spans), Map.copyOf(logs), Map.copyOf(traces), Map.copyOf(namedLogs), Map.copyOf(attributes), Map.copyOf(versions), a2a);
+        if (messageLog == null) throw new IllegalStateException("Missing message log configuration");
+        return new Catalog(Map.copyOf(metrics), Map.copyOf(spans), Map.copyOf(logs), Map.copyOf(traces), Map.copyOf(namedLogs), Map.copyOf(attributes), Map.copyOf(versions), a2a, messageLog);
     }
 
-    private static A2aProtocol load(String resource, Map<String, Definitions.Metric> metrics, Map<String, Definitions.Signal> spans,
+    private static Loaded load(String resource, Map<String, Definitions.Metric> metrics, Map<String, Definitions.Signal> spans,
         Map<String, Definitions.Signal> logs, Map<String, Definitions.NamedSignal> traces, Map<String, Definitions.NamedSignal> namedLogs,
         Map<String, Definitions.Attribute> attributes, Map<String, String> versions) {
         try (InputStream stream = SignalConfigurationLoader.class.getClassLoader().getResourceAsStream(resource)) {
@@ -83,9 +89,14 @@ final class SignalConfigurationLoader {
                     || logs.putIfAbsent(entry.getKey(), signal(entry.getKey(), extension.get("log_attributes"), entry.getKey() + ".log_attributes")) != null)
                     throw new IllegalStateException("Duplicate extension: " + entry.getKey());
             }
-            loadNamedSignals(root.get("traces"), resource + ".traces", traces);
-            loadNamedSignals(root.get("logs"), resource + ".logs", namedLogs);
-            return root.containsKey("a2a") ? a2aProtocol(root.get("a2a"), resource + ".a2a") : null;
+            A2aProtocol protocol = null;
+            Object traceSection = root.get("traces");
+            boolean protocolTraces = traceSection != null && map(traceSection, resource + ".traces").containsKey("a2a");
+            if (protocolTraces) {
+                if (map(traceSection, resource + ".traces").size() != 1) throw new IllegalStateException("Expected only the a2a mapping at " + resource + ".traces");
+                protocol = a2aProtocol(map(traceSection, resource + ".traces").get("a2a"), resource + ".traces.a2a");
+            } else loadNamedSignals(traceSection, resource + ".traces", traces);
+            return new Loaded(protocol, loadLogs(root.get("logs"), resource + ".logs", namedLogs));
         } catch (IllegalStateException e) {
             throw e;
         } catch (Exception e) {
@@ -125,6 +136,20 @@ final class SignalConfigurationLoader {
             if (target.putIfAbsent(entry.getKey(), named) != null) throw new IllegalStateException("Duplicate named signal: " + entry.getKey());
         }
     }
+    private static String loadLogs(Object value, String path, Map<String, Definitions.NamedSignal> target) {
+        if (value == null) return null;
+        String messageLog = null;
+        for (Map.Entry<String, Object> entry : map(value, path).entrySet()) {
+            Map<String, Object> item = map(entry.getValue(), path + "." + entry.getKey());
+            if (item.containsKey("attributes")) {
+                loadNamedSignals(java.util.Collections.singletonMap(entry.getKey(), entry.getValue()), path, target);
+                continue;
+            }
+            if (messageLog != null) throw new IllegalStateException("Duplicate message log at " + path);
+            messageLog = string(item.get("name"), path + "." + entry.getKey() + ".name");
+        }
+        return messageLog;
+    }
     private static A2aProtocol a2aProtocol(Object value, String path) {
         Map<String, Object> protocol = map(value, path);
         Map<String, Object> specialTraces = map(protocol.get("special_traces"), path + ".special_traces");
@@ -132,19 +157,20 @@ final class SignalConfigurationLoader {
         String stream = string(specialTraces.get("stream"), path + ".special_traces.stream");
         String streamEvent = string(specialTraces.get("stream_event"), path + ".special_traces.stream_event");
         String streamError = string(specialTraces.get("stream_error"), path + ".special_traces.stream_error");
-        String streamNegotiation = string(specialTraces.get("stream_negotiation"), path + ".special_traces.stream_negotiation");
+        String subscribeEvent = string(specialTraces.get("subscribe_event"), path + ".special_traces.subscribe_event");
+        String subscribeEnd = string(specialTraces.get("subscribe_end"), path + ".special_traces.subscribe_end");
         Set<String> traceNames = strings(protocol.get("trace_names"), path + ".trace_names");
         Set<String> clientOnlyTraces = strings(protocol.get("client_only_traces"), path + ".client_only_traces");
         Set<String> serverOnlyTraces = strings(protocol.get("server_only_traces"), path + ".server_only_traces");
-        if (!traceNames.containsAll(Set.of(message, stream, streamEvent, streamError, streamNegotiation))
+        if (!traceNames.containsAll(Set.of(message, stream, streamEvent, streamError, subscribeEvent, subscribeEnd))
             || !traceNames.containsAll(clientOnlyTraces) || !traceNames.containsAll(serverOnlyTraces)
             || !java.util.Collections.disjoint(clientOnlyTraces, serverOnlyTraces)) {
             throw new IllegalStateException("A2A special traces must be listed at " + path);
         }
         return new A2aProtocol(string(protocol.get("attribute_prefix"), path + ".attribute_prefix"), message, stream, streamEvent,
-            streamError, streamNegotiation, traceNames, clientOnlyTraces, serverOnlyTraces, signal(null, protocol.get("span_attributes"), path + ".span_attributes"),
-            signal(null, protocol.get("stream_event_attributes"), path + ".stream_event_attributes"),
-            signal("negotiation-t", protocol.get("stream_negotiation_attributes"), path + ".stream_negotiation_attributes"));
+            streamError, subscribeEvent, subscribeEnd, traceNames, clientOnlyTraces, serverOnlyTraces,
+            signal(null, protocol.get("span_attributes"), path + ".span_attributes"),
+            signal(null, protocol.get("stream_event_attributes"), path + ".stream_event_attributes"));
     }
     @SuppressWarnings("unchecked")
     private static Map<String, Object> map(Object value, String path) {
@@ -176,12 +202,12 @@ final class SignalConfigurationLoader {
         return Set.copyOf(result);
     }
 
+    record Loaded(A2aProtocol a2a, String messageLog) {}
     record Catalog(Map<String, Definitions.Metric> metrics, Map<String, Definitions.Signal> spans,
         Map<String, Definitions.Signal> logs, Map<String, Definitions.NamedSignal> traces,
         Map<String, Definitions.NamedSignal> namedLogs, Map<String, Definitions.Attribute> attributes,
-        Map<String, String> versions, A2aProtocol a2a) {}
-    record A2aProtocol(String attributePrefix, String message, String stream, String streamEvent, String streamError, String streamNegotiation,
-        Set<String> traceNames, Set<String> clientOnlyTraces, Set<String> serverOnlyTraces, Definitions.Signal span, Definitions.Signal streamEventSpan,
-        Definitions.Signal streamNegotiationSpan) {}
+        Map<String, String> versions, A2aProtocol a2a, String messageLog) {}
+    record A2aProtocol(String attributePrefix, String message, String stream, String streamEvent, String streamError, String subscribeEvent, String subscribeEnd,
+        Set<String> traceNames, Set<String> clientOnlyTraces, Set<String> serverOnlyTraces, Definitions.Signal span, Definitions.Signal streamEventSpan) {}
     private SignalConfigurationLoader() {}
 }

@@ -31,8 +31,8 @@ public final class ExtensionsExample {
         try (var sdk = ObservabilitySdk.start(SdkConfig.builder().serviceName(serviceName).build())) {
             var o = sdk.observe();
             send(o, Map.of("extension.name", "task-t", "task.type", "diagnosis", "task.object", "demo-line"), Map.of(), span -> {
-                o.metric("task.duration", 42000, Map.of("task.type", "diagnosis"), span);
-                o.metric("task.count", 1, Map.of("task.type", "diagnosis"), span);
+                o.metric("task.duration", 42000, Map.of("task.type", "diagnosis", "task.status", "completed"), span);
+                o.metric("task.count", 1, Map.of("task.type", "diagnosis", "task.status", "completed"), span);
             });
             send(o, Map.of("extension.name", "negotiation-t", "negotiation.id", "session-1", "negotiation.round", 2,
                 "negotiation.total_rounds", 3, "negotiation.result", "ACCEPT", "negotiation.performative", "PROPOSE"), Map.of("negotiation.max_rounds", 4), span -> {
@@ -40,11 +40,11 @@ public final class ExtensionsExample {
                 o.metric("negotiation.count", 1, Map.of("negotiation.result", "accept"), span);
             });
             send(o, Map.of("extension.name", "notification-t", "notification.topic", "demo-topic", "push.notification.url", "https://user:password@example.com/path?token=secret"), Map.of(),
-                span -> o.metric("notification.count", 1, Map.of("notification.topic", "demo-topic"), span));
+                span -> o.metric("notification.count", 1, Map.of("notification.topic", "demo-topic", "notification.result", "sent"), span));
             send(o, Map.of("extension.name", "authorization-t", "authorization.stage", "EXECUTE", "authorization.policy.operation.type", "create"), Map.of(), span -> {
-                o.metric("authorization.preauthorize.count", 1, Map.of("authorization.policy.operation.type", "create"), span);
-                o.metric("authorization.preauthorize.duration", 25, Map.of("authorization.policy.operation.type", "create"), span);
-                o.metric("authorization.execute.count", 1, Map.of("authorization.policy.operation.type", "create"), span);
+                o.metric("authorization.preauthorize.count", 1, Map.of("authorization.policy.operation.type", "create", "authorization.result", "allowed"), span);
+                o.metric("authorization.preauthorize.duration", 25, Map.of("authorization.policy.operation.type", "create", "authorization.result", "allowed"), span);
+                o.metric("authorization.execute.count", 1, Map.of("authorization.policy.operation.type", "create", "authorization.result", "allowed"), span);
             });
             o.trace("SendMessage", SignalKind.CLIENT, Map.of("extension.name", "unknown-extension", "task.type", "invalid-marker")).end();
             o.log("gen_ai.agent.a2at.message", LogSeverity.INFO, "invalid-marker", Map.of("extension.name", "notification-t", "negotiation.id", "invalid-marker"));

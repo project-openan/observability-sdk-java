@@ -60,7 +60,7 @@ public final class ConsumerComplaintHandling {
 
     private static void emitStep(Observability observe, ObservationSpan root, String runId, int index) {
         String owner = OWNERS[index - 1];
-        Map<String, Object> step = Map.of("workflow.step", STEPS[index - 1], "workflow.step.index", index,
+        Map<String, Object> step = Map.of("workflow.step.name", STEPS[index - 1], "workflow.step.id", "step-" + index,
             "workflow.step.status", "completed", "workflow.step.owner_agent", owner);
         try (var stepSpan = observe.trace("a2at.step.collect", SignalKind.INTERNAL, step, root)) {
             try (var substep = observe.trace("a2at.substep.analyze", SignalKind.INTERNAL,
@@ -71,10 +71,10 @@ public final class ConsumerComplaintHandling {
                 if (index == 4) pair(observe, substep, runId, "West-GD NETSpirit");
                 if (index == 4) pair(observe, substep, runId, "East-GD NETSpirit");
                 if (index == 5) pair(observe, substep, runId, "West-GD NETSpirit");
-                observe.metric("substep.duration", 600, Map.of("gen_ai.agent.name", owner, "substep.name", STEPS[index - 1]));
+                observe.metric("substep.duration", 600, Map.of("substep.status", "success", "gen_ai.agent.name", owner));
                 substep.ok();
             }
-            observe.metric("step.duration", 720, Map.of("workflow.step", STEPS[index - 1], "gen_ai.agent.name", owner));
+            observe.metric("step.duration", 720, Map.of("workflow.step.status", "success", "gen_ai.agent.name", owner));
             stepSpan.ok();
         }
     }

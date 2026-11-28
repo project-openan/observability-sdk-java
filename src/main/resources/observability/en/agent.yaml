@@ -1,0 +1,84 @@
+version: 1.0.0
+signal: agent
+description: 'Agent execution signals: Trace, Metric, and Log coverage for the agent lifecycle and substep execution'
+
+attributes:
+  gen_ai.agent.name: {otel_name: gen_ai.agent.name, type: string, source: gen_ai, value_range: 'Free string, agent name (low cardinality)', description: 'Agent name, OTel GenAI standard attribute, low cardinality recommended'}
+  agent.role: {otel_name: gen_ai.agent.a2at.agent.role, type: string, source: openan, value_range: 'Free string', description: 'Agent role'}
+  agent.skills: {otel_name: gen_ai.agent.a2at.agent.skills, type: string_array, source: openan, value_range: 'Non-empty string list', description: 'Agent skill list, non-empty string array'}
+  agent.state: {otel_name: gen_ai.agent.a2at.agent.state, type: string, source: openan, value_range: 'E.g. running/completed', description: 'Agent lifecycle state (e.g. running/completed)'}
+  substep.name: {otel_name: gen_ai.agent.a2at.substep.name, type: string, source: openan, value_range: 'Free string, defined by agent code', description: 'Substep name, defined by agent code'}
+  substep.status: {otel_name: gen_ai.agent.a2at.substep.status, type: string, source: openan, value_range: 'Metric dimension convention success/failed; Trace/Log runtime state (active/running/completed)', description: 'Substep execution state; metric dimensions use the terminal states success/failed, Trace/Log use runtime states'}
+  gen_ai.request.model: {otel_name: gen_ai.request.model, type: string, source: gen_ai, value_range: 'Model name (low cardinality)', description: 'Request model name, OTel GenAI standard attribute'}
+  gen_ai.response.model: {otel_name: gen_ai.response.model, type: string, source: gen_ai, value_range: 'Model name', description: 'Response model name, OTel GenAI standard attribute'}
+  gen_ai.token.modality: {otel_name: gen_ai.token.modality, type: string, signals: M, source: gen_ai, value_range: 'Conventional text/image/audio/unknown', description: 'Token modality, OTel GenAI standard attribute; conventional values text/image/audio/unknown'}
+  workflow.step.name: {otel_name: gen_ai.agent.a2at.workflow.step.name, type: string, source: openan, value_range: 'Free string, step name', description: 'Workflow step name, shared definition with workflow.yaml'}
+  workflow.step.id: {otel_name: gen_ai.agent.a2at.workflow.step.id, type: string, source: openan, value_range: 'Free string, step identifier', description: 'Step identifier, shared definition with workflow.yaml'}
+metrics:
+  substep.duration:
+    otel_name: gen_ai.agent.a2at.substep.duration
+    source: openan
+    description: 'Agent substep duration distribution (dimensions: substep terminal state × agent)'
+    type: histogram
+    value_type: number
+    unit: ms
+    attributes:
+      allowed: [substep.status, gen_ai.agent.name]
+      required: [substep.status, gen_ai.agent.name]
+  substep.count:
+    otel_name: gen_ai.agent.a2at.substep.count
+    source: openan
+    description: 'Agent substep cumulative execution count; failure rate can be derived'
+    type: counter
+    value_type: integer
+    unit: ''
+    attributes:
+      allowed: [substep.status, gen_ai.agent.name]
+      required: [substep.status, gen_ai.agent.name]
+  gen_ai.client.inference.usage.input_tokens:
+    otel_name: gen_ai.client.inference.usage.input_tokens
+    source: gen_ai
+    description: 'Cumulative input token consumption of model calls, current OTel GenAI semantic conventions, aggregated by operation/provider/modality'
+    type: counter
+    value_type: integer
+    unit: '{token}'
+    attributes:
+      allowed: [gen_ai.operation.name, gen_ai.provider.name, gen_ai.token.modality, gen_ai.agent.name, gen_ai.request.model]
+      required: [gen_ai.operation.name, gen_ai.provider.name, gen_ai.token.modality]
+  gen_ai.client.inference.usage.output_tokens:
+    otel_name: gen_ai.client.inference.usage.output_tokens
+    source: gen_ai
+    description: 'Cumulative output token consumption of model calls, current OTel GenAI semantic conventions, aggregated by operation/provider/modality'
+    type: counter
+    value_type: integer
+    unit: '{token}'
+    attributes:
+      allowed: [gen_ai.operation.name, gen_ai.provider.name, gen_ai.token.modality, gen_ai.agent.name, gen_ai.request.model]
+      required: [gen_ai.operation.name, gen_ai.provider.name, gen_ai.token.modality]
+
+traces:
+  substep:
+    name_prefix: a2at.substep.
+    source: openan
+    description: 'Agent substep span; the name is the prefix a2at.substep. plus the substep name'
+    attributes:
+      allowed: [gen_ai.agent.name, substep.name, substep.status]
+      required: [gen_ai.agent.name, substep.name, substep.status]
+
+logs:
+  agent:
+    name: gen_ai.agent.a2at.agent
+    source: openan
+    description: 'Agent lifecycle event log'
+    attributes:
+      allowed: [gen_ai.agent.name, agent.role, agent.skills, agent.state]
+      required: [gen_ai.agent.name, agent.state]
+  substep:
+    name: gen_ai.agent.a2at.substep
+    source: openan
+    description: 'Agent substep event log'
+    attributes:
+      allowed: [gen_ai.agent.name, substep.name, substep.status, workflow.step.name, workflow.step.id]
+      required: [gen_ai.agent.name, substep.name, substep.status]
+
+extensions: {}

@@ -1,0 +1,84 @@
+version: 1.0.0
+signal: agent
+description: 'Agent 执行信号：覆盖 Agent 生命周期与子步骤执行的 Trace、Metric、Log'
+
+attributes:
+  gen_ai.agent.name: {otel_name: gen_ai.agent.name, type: string, source: gen_ai, value_range: '自由字符串，Agent 名（低基数）', description: 'Agent 名称，OTel GenAI 标准属性，建议低基数'}
+  agent.role: {otel_name: gen_ai.agent.a2at.agent.role, type: string, source: openan, value_range: '自由字符串', description: 'Agent 角色'}
+  agent.skills: {otel_name: gen_ai.agent.a2at.agent.skills, type: string_array, source: openan, value_range: '非空字符串列表', description: 'Agent 技能列表，非空字符串数组'}
+  agent.state: {otel_name: gen_ai.agent.a2at.agent.state, type: string, source: openan, value_range: '如 running/completed', description: 'Agent 生命周期状态（如 running/completed）'}
+  substep.name: {otel_name: gen_ai.agent.a2at.substep.name, type: string, source: openan, value_range: '自由字符串，由 Agent 代码定义', description: '子步骤名称，由 Agent 代码定义'}
+  substep.status: {otel_name: gen_ai.agent.a2at.substep.status, type: string, source: openan, value_range: 'Metric 维度约定 success/failed；Trace/Log 运行态（active/running/completed）', description: '子步骤执行状态；Metric 维度约定取终态 success/failed，Trace/Log 为运行态'}
+  gen_ai.request.model: {otel_name: gen_ai.request.model, type: string, source: gen_ai, value_range: '模型名（低基数）', description: '请求模型名称，OTel GenAI 标准属性'}
+  gen_ai.response.model: {otel_name: gen_ai.response.model, type: string, source: gen_ai, value_range: '模型名', description: '响应模型名称，OTel GenAI 标准属性'}
+  gen_ai.token.modality: {otel_name: gen_ai.token.modality, type: string, signals: M, source: gen_ai, value_range: '约定 text/image/audio/unknown', description: 'Token 模态，OTel GenAI 标准属性；约定取值 text/image/audio/unknown'}
+  workflow.step.name: {otel_name: gen_ai.agent.a2at.workflow.step.name, type: string, source: openan, value_range: '自由字符串，步骤名', description: '工作流步骤名称，与 workflow.yaml 共享定义'}
+  workflow.step.id: {otel_name: gen_ai.agent.a2at.workflow.step.id, type: string, source: openan, value_range: '自由字符串，步骤标识', description: '步骤标识，与 workflow.yaml 共享定义'}
+metrics:
+  substep.duration:
+    otel_name: gen_ai.agent.a2at.substep.duration
+    source: openan
+    description: 'Agent 子步骤执行耗时分布（维度：子步骤终态 × Agent）'
+    type: histogram
+    value_type: number
+    unit: ms
+    attributes:
+      allowed: [substep.status, gen_ai.agent.name]
+      required: [substep.status, gen_ai.agent.name]
+  substep.count:
+    otel_name: gen_ai.agent.a2at.substep.count
+    source: openan
+    description: 'Agent 子步骤执行次数累计，可计算失败率'
+    type: counter
+    value_type: integer
+    unit: ''
+    attributes:
+      allowed: [substep.status, gen_ai.agent.name]
+      required: [substep.status, gen_ai.agent.name]
+  gen_ai.client.inference.usage.input_tokens:
+    otel_name: gen_ai.client.inference.usage.input_tokens
+    source: gen_ai
+    description: '模型调用输入 token 消耗累计，当前 OTel GenAI 语义约定，按操作/提供方/模态统计'
+    type: counter
+    value_type: integer
+    unit: '{token}'
+    attributes:
+      allowed: [gen_ai.operation.name, gen_ai.provider.name, gen_ai.token.modality, gen_ai.agent.name, gen_ai.request.model]
+      required: [gen_ai.operation.name, gen_ai.provider.name, gen_ai.token.modality]
+  gen_ai.client.inference.usage.output_tokens:
+    otel_name: gen_ai.client.inference.usage.output_tokens
+    source: gen_ai
+    description: '模型调用输出 token 消耗累计，当前 OTel GenAI 语义约定，按操作/提供方/模态统计'
+    type: counter
+    value_type: integer
+    unit: '{token}'
+    attributes:
+      allowed: [gen_ai.operation.name, gen_ai.provider.name, gen_ai.token.modality, gen_ai.agent.name, gen_ai.request.model]
+      required: [gen_ai.operation.name, gen_ai.provider.name, gen_ai.token.modality]
+
+traces:
+  substep:
+    name_prefix: a2at.substep.
+    source: openan
+    description: 'Agent 子步骤 Span，名称为前缀 a2at.substep. 加子步骤名'
+    attributes:
+      allowed: [gen_ai.agent.name, substep.name, substep.status]
+      required: [gen_ai.agent.name, substep.name, substep.status]
+
+logs:
+  agent:
+    name: gen_ai.agent.a2at.agent
+    source: openan
+    description: 'Agent 生命周期事件日志'
+    attributes:
+      allowed: [gen_ai.agent.name, agent.role, agent.skills, agent.state]
+      required: [gen_ai.agent.name, agent.state]
+  substep:
+    name: gen_ai.agent.a2at.substep
+    source: openan
+    description: 'Agent 子步骤事件日志'
+    attributes:
+      allowed: [gen_ai.agent.name, substep.name, substep.status, workflow.step.name, workflow.step.id]
+      required: [gen_ai.agent.name, substep.name, substep.status]
+
+extensions: {}

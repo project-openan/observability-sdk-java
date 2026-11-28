@@ -51,7 +51,7 @@ class WorkflowCoverageTest {
             .setMeterProvider(SdkMeterProvider.builder().registerMetricReader(metrics).build()).build()) {
             var observe = new Observability(sdk);
             var workflow = Map.of("workflow.id", "wf-1", "workflow.type", "fault-diagnosis", "workflow.status", "running", "workflow.session_id", "s-1");
-            var step = Map.of("workflow.step", "collect-alarm", "workflow.step.index", 1, "workflow.step.status", "active", "workflow.step.owner_agent", "alarm-agent");
+            var step = Map.of("workflow.step.name", "collect-alarm", "workflow.step.id", "step-1", "workflow.step.status", "active", "workflow.step.owner_agent", "alarm-agent");
             var workflowSpan = observe.trace("a2at.workflow", SignalKind.INTERNAL, workflow);
             var stepSpan = observe.trace("a2at.step.collect-alarm", SignalKind.INTERNAL, step, workflowSpan);
             observe.log("gen_ai.agent.a2at.workflow", LogSeverity.INFO, "workflow started",
@@ -59,7 +59,8 @@ class WorkflowCoverageTest {
             observe.log("gen_ai.agent.a2at.step", LogSeverity.INFO, "step started", step, stepSpan);
             observe.metric("workflow.duration", 42, Map.of("workflow.type", "fault-diagnosis", "workflow.status", "completed"));
             observe.metric("workflow.count", 1, Map.of("workflow.type", "fault-diagnosis", "workflow.status", "completed"));
-            observe.metric("step.duration", 5, Map.of("workflow.step", "collect-alarm", "gen_ai.agent.name", "alarm-agent"));
+            observe.metric("step.duration", 5, Map.of("workflow.step.status", "success", "gen_ai.agent.name", "alarm-agent"));
+            observe.metric("step.count", 1, Map.of("workflow.step.status", "success", "gen_ai.agent.name", "alarm-agent"));
             stepSpan.end(); workflowSpan.end();
 
             assertEquals(2, spans.getFinishedSpanItems().size());
@@ -67,7 +68,7 @@ class WorkflowCoverageTest {
             assertEquals("wf-1", spans.getFinishedSpanItems().get(1).getAttributes().get(AttributeKey.stringKey(P + "workflow.id")));
             assertEquals(2, logs.getFinishedLogRecordItems().size());
             assertEquals("transport", logs.getFinishedLogRecordItems().get(0).getAttributes().get(AttributeKey.stringKey(P + "business.domain")));
-            assertEquals(3, metrics.collectAllMetrics().size());
+            assertEquals(4, metrics.collectAllMetrics().size());
         }
     }
 
@@ -81,7 +82,7 @@ class WorkflowCoverageTest {
             .setMeterProvider(SdkMeterProvider.builder().registerMetricReader(metrics).build()).build()) {
             var observe = new Observability(sdk);
             observe.trace("a2at.workflow", SignalKind.CLIENT, Map.of("workflow.id", "wf-1", "workflow.type", "diagnosis", "workflow.status", "running")).end();
-            observe.trace("a2at.step.", SignalKind.INTERNAL, Map.of("workflow.step", "s", "workflow.step.index", 1, "workflow.step.status", "active")).end();
+            observe.trace("a2at.step.", SignalKind.INTERNAL, Map.of("workflow.step.name", "s", "workflow.step.id", "s-1", "workflow.step.status", "active")).end();
             observe.metric("workflow.duration", 1, Map.of("workflow.type", "diagnosis", "business.domain", "transport"));
             observe.log("gen_ai.agent.a2at.workflow", LogSeverity.INFO, "invalid", Map.of("workflow.id", "wf-1", "workflow.type", "diagnosis", "workflow.status", "running", "agent.state", "running"));
             assertTrue(spans.getFinishedSpanItems().isEmpty());
@@ -98,7 +99,7 @@ class WorkflowCoverageTest {
             var workflow = observe.trace("a2at.workflow", SignalKind.INTERNAL, Map.of(
                 "workflow.id", "wf-1", "workflow.type", "fault-diagnosis", "workflow.status", "running"));
             var step = observe.trace("a2at.step.collect", SignalKind.INTERNAL, Map.of(
-                "workflow.step", "collect", "workflow.step.index", 1, "workflow.step.status", "running"), workflow);
+                "workflow.step.name", "collect", "workflow.step.id", "step-1", "workflow.step.status", "running"), workflow);
             var agent = observe.trace("a2at.substep.analyze", SignalKind.INTERNAL, Map.of(
                 "gen_ai.agent.name", "diagnosis-agent", "substep.name", "analyze", "substep.status", "running"), step);
             var client = observe.trace("SendMessage", SignalKind.CLIENT, Map.of(

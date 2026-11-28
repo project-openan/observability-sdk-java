@@ -1,0 +1,257 @@
+version: 1.0.0
+signal: a2at
+description: 'A2A / A2A-T 协作信号：覆盖 A2A 协议操作与四种 A2A-T 扩展的 Trace、Metric、Log'
+
+attributes:
+  operation.name: {otel_name: gen_ai.agent.a2a.operation.name, type: string, signals: SM, value_range: 'A2A 操作名（如 SendMessage）', description: 'A2A 操作名称（如 SendMessage）'}
+  task_id: {otel_name: gen_ai.agent.a2a.task_id, type: string, signals: S, value_range: '自由字符串', description: 'A2A 任务 ID'}
+  context_id: {otel_name: gen_ai.agent.a2a.context_id, type: string, signals: S, value_range: '自由字符串', description: 'A2A 上下文 ID'}
+  message_id: {otel_name: gen_ai.agent.a2a.message_id, type: string, signals: S, value_range: '自由字符串', description: 'A2A 消息 ID'}
+  role: {otel_name: gen_ai.agent.a2a.role, type: string, signals: S, value_range: 'user / agent', description: '消息角色（user/agent）'}
+  extensions: {otel_name: gen_ai.agent.a2a.extensions, type: string, signals: S, value_range: '自由字符串，扩展标识列表', description: '请求携带的 A2A 扩展标识'}
+  parts.number: {otel_name: gen_ai.agent.a2a.parts.number, type: integer, signals: S, value_range: '非负整数', description: '消息分片数量，非负整数'}
+  config_id: {otel_name: gen_ai.agent.a2a.config_id, type: string, signals: S, value_range: '自由字符串', description: '推送通知配置 ID'}
+  request: {otel_name: gen_ai.agent.a2a.request, type: string, signals: S, value_range: '自由字符串，记录前脱敏', description: '请求内容，记录前脱敏'}
+  response: {otel_name: gen_ai.agent.a2a.response, type: string, signals: S, value_range: '自由字符串，记录前脱敏', description: '响应内容，记录前脱敏'}
+  streaming-event: {otel_name: gen_ai.agent.a2a.streaming-event, type: string, signals: S, value_range: '自由字符串（如 status update）', description: '流式事件类型'}
+  error.type: {otel_name: error.type, type: string, signals: SM, value_range: '低基数错误码（如 timeout）', description: '错误类型，低基数错误码，OTel 标准属性'}
+  gen_ai.system: {otel_name: gen_ai.system, type: string, signals: M, value_range: '仅允许 a2a（运行时强校验）', description: 'GenAI 系统标识，OTel 标准属性，本 SDK 仅允许取值 a2a'}
+  gen_ai.provider.name: {otel_name: gen_ai.provider.name, type: string, signals: SM, value_range: '提供方名（如 openai）', description: '模型提供方，OTel GenAI 标准属性（如 openai）'}
+  gen_ai.operation.name: {otel_name: gen_ai.operation.name, type: string, signals: SM, value_range: '如 chat/generate_content', description: 'GenAI 操作名称，OTel GenAI 标准属性（如 chat/generate_content）'}
+  gen_ai.agent.id: {otel_name: gen_ai.agent.id, type: string, signals: S, value_range: '自由字符串', description: 'Agent 标识，OTel GenAI 标准属性'}
+  gen_ai.agent.version: {otel_name: gen_ai.agent.version, type: string, signals: S, value_range: '版本号字符串', description: 'Agent 版本，OTel GenAI 标准属性'}
+  push_notification.event_kind: {otel_name: gen_ai.agent.a2a.push_notification.event_kind, type: string, signals: S, value_range: '如 task-status', description: '推送通知事件类型（如 task-status）'}
+  transport: {otel_name: gen_ai.agent.a2a.transport, type: string, signals: S, value_range: '如 jsonrpc/http', description: '传输方式（如 jsonrpc/http）'}
+  protocol.version: {otel_name: gen_ai.agent.a2a.protocol.version, type: string, signals: S, value_range: '如 0.3', description: 'A2A 协议版本'}
+  task.status.state: {otel_name: gen_ai.agent.a2a.task.status.state, type: string, signals: S, value_range: 'A2A 任务状态（submitted/working/completed/failed 等）', description: 'A2A 任务状态（如 submitted/working/completed）'}
+  usage.input_tokens: {otel_name: gen_ai.usage.input_tokens, type: integer, signals: S, value_range: '非负整数', description: '单次调用输入 token 数，OTel GenAI 标准属性'}
+  usage.output_tokens: {otel_name: gen_ai.usage.output_tokens, type: integer, signals: S, value_range: '非负整数', description: '单次调用输出 token 数，OTel GenAI 标准属性'}
+  artifact.name: {otel_name: a2a.artifact.name, type: string, signals: S, value_range: '自由字符串', description: '流式响应产出物名称，A2A 标准属性'}
+  artifact.append: {otel_name: a2a.artifact.append, type: boolean, signals: S, value_range: 'true / false', description: '是否追加到已有产出物，A2A 标准属性'}
+  artifact.last_chunk: {otel_name: a2a.artifact.last_chunk, type: boolean, signals: S, value_range: 'true / false', description: '是否为最后一块，A2A 标准属性'}
+  extension.name: {otel_name: gen_ai.agent.a2at.extension.name, type: string, values: [task-t, negotiation-t, notification-t, authorization-t], value_range: 'task-t / negotiation-t / notification-t / authorization-t（枚举强约束）', description: 'A2A-T 扩展名称，枚举强约束，作为分支字段选择扩展属性白名单'}
+  task.type: {otel_name: gen_ai.agent.a2at.task.type, type: string, value_range: '低基数任务类型（如 diagnosis），Task-T 下非空', description: '任务类型，低基数（如 diagnosis）'}
+  task.object: {otel_name: gen_ai.agent.a2at.task.object, type: string, value_range: '自由字符串', description: '任务对象或目标'}
+  task.status: {otel_name: gen_ai.agent.a2at.task.status, type: string, value_range: '约定 completed/failed/cancelled', description: '任务终态，用于统计任务成功率'}
+  negotiation.id: {otel_name: gen_ai.agent.a2at.negotiation.id, type: string, value_range: '自由字符串', description: '协商流程标识'}
+  negotiation.round: {otel_name: gen_ai.agent.a2at.negotiation.round, type: integer, value_range: '正整数', description: '当前协商轮次，正整数'}
+  negotiation.total_rounds: {otel_name: gen_ai.agent.a2at.negotiation.total_rounds, type: integer, value_range: '正整数', description: '协商实际总轮次，正整数'}
+  negotiation.max_rounds: {otel_name: gen_ai.agent.a2at.negotiation.max_rounds, type: integer, value_range: '正整数', description: '协商轮次上限，正整数'}
+  negotiation.result: {otel_name: gen_ai.agent.a2at.negotiation.result, type: string, value_range: '约定 accepted/rejected 等', description: '协商结果（约定 accepted/rejected 等）'}
+  negotiation.performative: {otel_name: gen_ai.agent.a2at.negotiation.performative, type: string, value_range: '如 propose/accept/reject', description: '协商言语行为（如 propose/accept/reject）'}
+  notification.topic: {otel_name: gen_ai.agent.a2at.notification.topic, type: string, value_range: '低基数通知主题', description: '通知主题，低基数'}
+  notification.result: {otel_name: gen_ai.agent.a2at.notification.result, type: string, value_range: '约定 sent/failed', description: '通知送达结果，用于统计通知成功率'}
+  push.notification.url: {otel_name: gen_ai.agent.a2at.push.notification.url, type: string, value_range: 'URL 字符串，记录前脱敏', description: '推送通知回调地址，记录前脱敏'}
+  authorization.stage: {otel_name: gen_ai.agent.a2at.authorization.stage, type: string, value_range: '如 preauthorize/execute/manual-review', description: '授权阶段（如 preauthorize/execute/manual-review）'}
+  authorization.policy.operation.type: {otel_name: gen_ai.agent.a2at.authorization.policy.operation.type, type: string, value_range: '低基数策略操作类型', description: '授权策略操作类型，低基数'}
+  authorization.result: {otel_name: gen_ai.agent.a2at.authorization.result, type: string, value_range: '约定 allowed/denied，执行失败记 error', description: '授权决策结果，用于统计授权通过率'}
+
+metrics:
+  gen_ai.client.operation.duration:
+    otel_name: gen_ai.client.operation.duration
+    source: gen_ai
+    description: 'A2A 客户端单次操作耗时分布，OTel GenAI 语义约定'
+    protocol: a2a
+    type: histogram
+    value_type: number
+    unit: s
+    attributes:
+      allowed: [operation.name, gen_ai.system, error.type]
+      required: [operation.name]
+  gen_ai.agent.a2a.streaming.duration:
+    otel_name: gen_ai.agent.a2a.streaming.duration
+    source: a2a
+    description: 'A2A 流式调用整体耗时分布'
+    protocol: a2a
+    type: histogram
+    value_type: number
+    unit: s
+    attributes:
+      allowed: [operation.name, gen_ai.system, error.type]
+      required: [operation.name]
+  task.duration:
+    otel_name: gen_ai.agent.a2at.task.duration
+    source: openan
+    description: 'Task-T 任务执行耗时分布'
+    type: histogram
+    value_type: number
+    unit: ms
+    extension: task-t
+    attributes:
+      allowed: [task.type, task.object, task.status]
+      required: [task.type]
+  task.count:
+    otel_name: gen_ai.agent.a2at.task.count
+    source: openan
+    description: 'Task-T 任务执行次数累计'
+    type: counter
+    value_type: integer
+    unit: ''
+    extension: task-t
+    attributes:
+      allowed: [task.type, task.object, task.status]
+      required: [task.type]
+  negotiation.rounds:
+    otel_name: gen_ai.agent.a2at.negotiation.rounds
+    source: openan
+    description: 'Negotiation-T 单次协商的轮数分布'
+    type: histogram
+    value_type: integer
+    unit: '{round}'
+    extension: negotiation-t
+    attributes:
+      allowed: [negotiation.id, negotiation.result]
+      required: []
+  negotiation.count:
+    otel_name: gen_ai.agent.a2at.negotiation.count
+    source: openan
+    description: 'Negotiation-T 协商次数累计'
+    type: counter
+    value_type: integer
+    unit: ''
+    extension: negotiation-t
+    attributes:
+      allowed: [negotiation.result]
+      required: []
+  notification.count:
+    otel_name: gen_ai.agent.a2at.notification.count
+    source: openan
+    description: 'Notification-T 通知发送次数累计'
+    type: counter
+    value_type: integer
+    unit: ''
+    extension: notification-t
+    attributes:
+      allowed: [notification.topic, notification.result]
+      required: []
+  authorization.preauthorize.count:
+    otel_name: gen_ai.agent.a2at.authorization.preauthorize.count
+    source: openan
+    description: 'Authorization-T 预授权次数累计'
+    type: counter
+    value_type: integer
+    unit: ''
+    extension: authorization-t
+    attributes:
+      allowed: [authorization.policy.operation.type, authorization.result]
+      required: []
+  authorization.preauthorize.duration:
+    otel_name: gen_ai.agent.a2at.authorization.preauthorize.duration
+    source: openan
+    description: 'Authorization-T 预授权耗时分布'
+    type: histogram
+    value_type: number
+    unit: ms
+    extension: authorization-t
+    attributes:
+      allowed: [authorization.policy.operation.type, authorization.result]
+      required: []
+  authorization.execute.count:
+    otel_name: gen_ai.agent.a2at.authorization.execute.count
+    source: openan
+    description: 'Authorization-T 授权执行次数累计'
+    type: counter
+    value_type: integer
+    unit: ''
+    extension: authorization-t
+    attributes:
+      allowed: [authorization.policy.operation.type, authorization.result]
+      required: []
+
+traces:
+  a2a:
+    source: a2a
+    attribute_prefix: gen_ai.agent.a2a.
+    special_traces:
+      message: SendMessage
+      stream: SendStreamingMessage
+      stream_event: SendStreamingMessage-event
+      stream_error: SendStreamingMessage-end
+      subscribe_event: SubscribeToTask-event
+      subscribe_end: SubscribeToTask-end
+    trace_names:
+      - SendMessage
+      - SendStreamingMessage
+      - SendStreamingMessage-event
+      - SendStreamingMessage-end
+      - GetTask
+      - CancelTask
+      - ListTasks
+      - SubscribeToTask
+      - SubscribeToTask-event
+      - SubscribeToTask-end
+      - CreateTaskPushNotificationConfig
+      - GetTaskPushNotificationConfig
+      - ListTaskPushNotificationConfigs
+      - DeleteTaskPushNotificationConfig
+      - GetExtendedAgentCard
+      - SendPushNotification
+    trace_descriptions:
+      SendMessage: 'Agent 间同步消息调用，客户端/服务端各记录一侧；携带 extension.name 时并入对应扩展属性'
+      SendStreamingMessage: 'Agent 间流式调用整体区间（父 Span，两侧均产生 -event / -end 子 Span）；携带 extension.name 时并入对应扩展属性'
+      SendStreamingMessage-event: '流式响应中的单个事件，独立根 Span，以 Span Link 关联发起方'
+      SendStreamingMessage-end: '流式调用结束或异常终止，独立根 Span，以 Span Link 关联发起方'
+      GetTask: 'A2A 任务查询'
+      CancelTask: 'A2A 任务取消'
+      ListTasks: 'A2A 任务列举'
+      SubscribeToTask: 'A2A 任务订阅（父 Span，两侧均产生 -event / -end 子 Span）'
+      SubscribeToTask-event: '订阅推送的单个事件，独立根 Span，以 Span Link 关联发起方'
+      SubscribeToTask-end: '订阅结束或异常终止，独立根 Span，以 Span Link 关联发起方'
+      CreateTaskPushNotificationConfig: '创建任务推送通知配置'
+      GetTaskPushNotificationConfig: '查询任务推送通知配置'
+      ListTaskPushNotificationConfigs: '列举任务推送通知配置'
+      DeleteTaskPushNotificationConfig: '删除任务推送通知配置'
+      GetExtendedAgentCard: '查询扩展 Agent 卡片，仅客户端'
+      SendPushNotification: '服务端向客户端推送任务通知（出站推送，Span Kind CLIENT），仅服务端记录'
+    client_only_traces: [GetExtendedAgentCard, SendPushNotification]
+    server_only_traces: []
+    span_attributes:
+      allowed: [operation.name, task_id, context_id, message_id, role, extensions, parts.number, config_id, request, response, error.type, gen_ai.provider.name, gen_ai.operation.name, gen_ai.agent.name, gen_ai.agent.id, gen_ai.agent.version, push_notification.event_kind, transport, protocol.version, gen_ai.response.model, usage.input_tokens, usage.output_tokens]
+      required: []
+    stream_event_attributes:
+      allowed: [operation.name, task_id, context_id, message_id, role, extensions, parts.number, config_id, request, response, error.type, streaming-event, gen_ai.provider.name, gen_ai.operation.name, gen_ai.agent.name, gen_ai.agent.id, gen_ai.agent.version, task.status.state, artifact.name, artifact.append, artifact.last_chunk, gen_ai.response.model, usage.input_tokens, usage.output_tokens]
+      required: []
+
+logs:
+  message:
+    name: gen_ai.agent.a2at.message
+    source: openan
+    description: 'A2A-T 消息日志，必须携带 extension.name 以选择对应扩展的日志属性白名单'
+
+extensions:
+  task-t:
+    source: openan
+    description: 'Task-T 任务扩展：在消息中传递任务类型与对象'
+    span_attributes:
+      allowed: [extension.name, task.type, task.object]
+      required: [extension.name, task.type]
+    log_attributes:
+      allowed: [extension.name, task.type, task.object]
+      required: [extension.name, task.type]
+  negotiation-t:
+    source: openan
+    description: 'Negotiation-T 协商扩展：多轮协商的提议与应答'
+    span_attributes:
+      allowed: [extension.name, negotiation.id, negotiation.round, negotiation.total_rounds, negotiation.result, negotiation.performative]
+      required: [extension.name]
+    log_attributes:
+      allowed: [extension.name, negotiation.id, negotiation.round, negotiation.total_rounds, negotiation.max_rounds, negotiation.result, negotiation.performative]
+      required: [extension.name]
+  notification-t:
+    source: openan
+    description: 'Notification-T 通知扩展：订阅式通知投递'
+    span_attributes:
+      allowed: [extension.name, notification.topic, push.notification.url]
+      required: [extension.name]
+    log_attributes:
+      allowed: [extension.name, notification.topic, push.notification.url]
+      required: [extension.name]
+  authorization-t:
+    source: openan
+    description: 'Authorization-T 授权扩展：预授权与授权执行'
+    span_attributes:
+      allowed: [extension.name, authorization.stage, authorization.policy.operation.type]
+      required: [extension.name]
+    log_attributes:
+      allowed: [extension.name, authorization.stage, authorization.policy.operation.type]
+      required: [extension.name]

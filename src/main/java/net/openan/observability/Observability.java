@@ -74,7 +74,7 @@ public final class Observability {
      */
     public ObservationSpan trace(String name, SignalKind kind, Map<String, ?> attributes) { return trace(name, kind, attributes, null); }
     /**
-     * Starts a trace span using an explicit parent. Stream-event signals add the parent as a span link.
+     * Starts a trace span using an explicit parent. Streaming / subscription event and end signals add the parent as a span link.
      *
      * @return a span handle; it is safe to close even when the requested signal is rejected
      */
@@ -82,7 +82,7 @@ public final class Observability {
         if (!enabled.get()) return ObservationSpan.noop();
         Context context = parent == null ? Context.current() : parent.context();
         try {
-            boolean streamEvent = Definitions.STREAM_EVENT.equals(name) || Definitions.STREAM_ERROR.equals(name);
+            boolean linked = Definitions.linkedSpan(name);
             boolean clientOnly = Definitions.A2A_CLIENT_ONLY_SPAN_NAMES.contains(name);
             boolean serverOnly = Definitions.A2A_SERVER_ONLY_SPAN_NAMES.contains(name);
             boolean a2a = Definitions.A2A_SPAN_NAMES.contains(name);
@@ -93,13 +93,13 @@ public final class Observability {
                 Definitions.Signal extension = AttributesConverter.selectOptionalSignal(attributes, Definitions.SPANS);
                 definition = Definitions.span(name, extension);
             } else {
-                if (kind != SignalKind.INTERNAL || streamEvent) throw new IllegalArgumentException();
+                if (kind != SignalKind.INTERNAL || linked) throw new IllegalArgumentException();
                 definition = Definitions.namedTrace(name);
                 if (definition == null) throw new IllegalArgumentException();
             }
             Attributes attrs = AttributesConverter.convertSignal(attributes, 'S', definition, true);
             SpanBuilder builder = tracer.spanBuilder(name).setSpanKind(SpanKind.valueOf(kind.name())).setAllAttributes(attrs);
-            if (streamEvent) {
+            if (linked) {
                 builder.setNoParent();
                 SpanContext link = Span.fromContext(context).getSpanContext();
                 if (link.isValid()) builder.addLink(link);
